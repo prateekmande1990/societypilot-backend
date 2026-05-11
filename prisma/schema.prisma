@@ -19,6 +19,8 @@ model Society {
 
   users User[]
   flats Flat[]
+  bills Bill[]
+  payments Payment[]
 
   @@map("societies")
 }
@@ -39,6 +41,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   flat      Flat?    @relation(fields: [flatId], references: [id])
+  bills     Bill[]
+  payments  Payment[]
 
   @@map("users")
 }
@@ -53,7 +57,52 @@ model Flat {
 
   society Society @relation(fields: [societyId], references: [id])
   users   User[]
+  bills   Bill[]
 
   @@unique([societyId, flatNumber, tower])
   @@map("flats")
+}
+
+model Bill {
+  id          String   @id @default(uuid())
+  societyId   String
+  userId      String
+  flatId      String
+  period      String
+  amount      Decimal  @db.Decimal(10, 2)
+  dueDate     DateTime
+  status      String   @default("PENDING")
+  generatedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  society  Society   @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flat     Flat      @relation(fields: [flatId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@index([societyId, period])
+  @@map("bills")
+}
+
+model Payment {
+  id              String   @id @default(uuid())
+  societyId       String
+  userId          String
+  billId          String?
+  amount          Decimal  @db.Decimal(10, 2)
+  method          String
+  status          String   @default("SUCCESS")
+  razorpayOrderId String?  @unique
+  razorpayPaymentId String? @unique
+  paidAt          DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bill    Bill?   @relation(fields: [billId], references: [id], onDelete: SetNull)
+
+  @@index([societyId, status])
+  @@map("payments")
 }

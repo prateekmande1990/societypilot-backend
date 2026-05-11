@@ -11,6 +11,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'complaints:read',
     'complaints:write',
     'finance:read',
+    'finance:write',
   ],
   [Role.TREASURER]: ['finance:read', 'finance:write', 'finance:approve'],
   [Role.JOINT_SECRETARY]: ['residents:read', 'residents:write', 'complaints:write'],

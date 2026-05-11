@@ -9,6 +9,7 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
 import { SocietyContextGuard } from './common/guards/society-context.guard';
 import { TowerScopeGuard } from './common/guards/tower-scope.guard';
 import { ResidentsModule } from './modules/residents/residents.module';
+import { FinanceModule } from './modules/finance/finance.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ResidentsModule } from './modules/residents/residents.module';
     PrismaModule,
     AuthModule,
     ResidentsModule,
+    FinanceModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGlobalGuard },
