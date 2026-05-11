@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, Patch, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import { ResidentsService } from './residents.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { CreateResidentDto } from './dto/create-resident.dto';
 import { UpdateResidentDto } from './dto/update-resident.dto';
 import { Permissions } from '../../common/decorators/permissions.decorator';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 @Controller('residents')
 export class ResidentsController {
@@ -20,8 +21,11 @@ export class ResidentsController {
     Role.TOWER_CAPTAIN,
   )
   @Permissions('residents:read')
-  list(@Req() req: { user: { societyId: string } }) {
-    return this.residentsService.list(req.user.societyId);
+  list(
+    @Req() req: { user: { societyId: string } },
+    @Query() query: PaginationQueryDto,
+  ) {
+    return this.residentsService.list(req.user.societyId, query);
   }
 
   @Post()

@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common';
 import { VendorsService } from './vendors.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Permissions } from '../../common/decorators/permissions.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { JwtPayload } from '../auth/types/jwt-payload.type';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 @Controller('vendors')
 export class VendorsController {
@@ -24,8 +25,11 @@ export class VendorsController {
     Role.FAMILY_MEMBER,
   )
   @Permissions('vendors:read')
-  list(@Req() req: { user: JwtPayload }) {
-    return this.vendorsService.list(req.user.societyId);
+  list(
+    @Req() req: { user: JwtPayload },
+    @Query() query: PaginationQueryDto,
+  ) {
+    return this.vendorsService.list(req.user.societyId, query);
   }
 
   @Post()

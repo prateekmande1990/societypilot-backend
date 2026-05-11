@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common';
 import { FinanceService } from './finance.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
@@ -6,6 +6,7 @@ import { Permissions } from '../../common/decorators/permissions.decorator';
 import { GenerateBillsDto } from './dto/generate-bills.dto';
 import { RecordPaymentDto } from './dto/record-payment.dto';
 import { Public } from '../../common/decorators/public.decorator';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 @Controller('finance')
 export class FinanceController {
@@ -14,8 +15,11 @@ export class FinanceController {
   @Get('bills')
   @Roles(Role.CHAIRMAN, Role.SECRETARY, Role.TREASURER, Role.ACCOUNTANT)
   @Permissions('finance:read')
-  listBills(@Req() req: { user: { societyId: string } }) {
-    return this.financeService.listBills(req.user.societyId);
+  listBills(
+    @Req() req: { user: { societyId: string } },
+    @Query() query: PaginationQueryDto,
+  ) {
+    return this.financeService.listBills(req.user.societyId, query);
   }
 
   @Post('bills/generate')

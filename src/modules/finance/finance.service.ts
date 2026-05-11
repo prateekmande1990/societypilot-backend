@@ -2,17 +2,27 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GenerateBillsDto } from './dto/generate-bills.dto';
 import { RecordPaymentDto } from './dto/record-payment.dto';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 @Injectable()
 export class FinanceService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listBills(societyId: string) {
-    return this.prisma.bill.findMany({
-      where: { societyId },
-      include: { user: true, flat: true },
-      orderBy: { createdAt: 'desc' },
-    });
+  async listBills(societyId: string, query: PaginationQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+    const [items, total] = await Promise.all([
+      this.prisma.bill.findMany({
+        where: { societyId },
+        include: { user: true, flat: true },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.bill.count({ where: { societyId } }),
+    ]);
+    return { items, pagination: { page, limit, total } };
   }
 
   async generateBills(societyId: string, dto: GenerateBillsDto) {

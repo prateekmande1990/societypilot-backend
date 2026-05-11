@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { UpdateComplaintStatusDto } from './dto/update-complaint-status.dto';
 import { JwtPayload } from '../auth/types/jwt-payload.type';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 @Injectable()
 export class ComplaintsService {
@@ -23,12 +24,21 @@ export class ComplaintsService {
     });
   }
 
-  async list(user: JwtPayload) {
-    return this.prisma.complaint.findMany({
-      where: { societyId: user.societyId },
-      include: { user: true, flat: true },
-      orderBy: { createdAt: 'desc' },
-    });
+  async list(user: JwtPayload, query: PaginationQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+    const [items, total] = await Promise.all([
+      this.prisma.complaint.findMany({
+        where: { societyId: user.societyId },
+        include: { user: true, flat: true },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.complaint.count({ where: { societyId: user.societyId } }),
+    ]);
+    return { items, pagination: { page, limit, total } };
   }
 
   async updateStatus(id: string, dto: UpdateComplaintStatusDto) {

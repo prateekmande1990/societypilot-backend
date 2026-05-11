@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import { ComplaintsService } from './complaints.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
@@ -6,6 +6,7 @@ import { Permissions } from '../../common/decorators/permissions.decorator';
 import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { UpdateComplaintStatusDto } from './dto/update-complaint-status.dto';
 import { JwtPayload } from '../auth/types/jwt-payload.type';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 @Controller('complaints')
 export class ComplaintsController {
@@ -30,8 +31,8 @@ export class ComplaintsController {
   }
 
   @Get()
-  list(@Req() req: { user: JwtPayload }) {
-    return this.complaintsService.list(req.user);
+  list(@Req() req: { user: JwtPayload }, @Query() query: PaginationQueryDto) {
+    return this.complaintsService.list(req.user, query);
   }
 
   @Patch(':id/status')
