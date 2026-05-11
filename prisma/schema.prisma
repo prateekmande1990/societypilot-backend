@@ -22,6 +22,8 @@ model Society {
   bills Bill[]
   payments Payment[]
   complaints Complaint[]
+  meetings   Meeting[]
+  votes      MeetingVote[]
 
   @@map("societies")
 }
@@ -45,6 +47,8 @@ model User {
   bills     Bill[]
   payments  Payment[]
   complaints Complaint[]
+  meetings   Meeting[]
+  votes      MeetingVote[]
 
   @@map("users")
 }
@@ -87,6 +91,41 @@ model Complaint {
 
   @@index([societyId, status])
   @@map("complaints")
+}
+
+model Meeting {
+  id          String   @id @default(uuid())
+  societyId   String
+  createdById String
+  title       String
+  agenda      String
+  scheduledAt DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  society   Society      @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  createdBy User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  votes     MeetingVote[]
+
+  @@index([societyId, scheduledAt])
+  @@map("meetings")
+}
+
+model MeetingVote {
+  id        String   @id @default(uuid())
+  societyId String
+  meetingId String
+  userId    String
+  vote      String
+  createdAt DateTime @default(now())
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, userId])
+  @@index([societyId, meetingId])
+  @@map("meeting_votes")
 }
 
 model Bill {

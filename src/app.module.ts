@@ -11,6 +11,7 @@ import { TowerScopeGuard } from './common/guards/tower-scope.guard';
 import { ResidentsModule } from './modules/residents/residents.module';
 import { FinanceModule } from './modules/finance/finance.module';
 import { ComplaintsModule } from './modules/complaints/complaints.module';
+import { MeetingsModule } from './modules/meetings/meetings.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ComplaintsModule } from './modules/complaints/complaints.module';
     ResidentsModule,
     FinanceModule,
     ComplaintsModule,
+    MeetingsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGlobalGuard },
