@@ -17,6 +17,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AmenitiesModule } from './modules/amenities/amenities.module';
 import { WebhookModule } from './modules/webhook/webhook.module';
+import { ParkingModule } from './modules/parking/parking.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { WebhookModule } from './modules/webhook/webhook.module';
     DashboardModule,
     AmenitiesModule,
     WebhookModule,
+    ParkingModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGlobalGuard },

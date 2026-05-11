@@ -21,6 +21,8 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'documents:approve',
     'dashboard:resident',
     'amenities:book',
+    'parking:assign',
+    'parking:violation',
   ],
   [Role.TREASURER]: [
     'finance:read',
@@ -32,6 +34,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'dashboard:treasurer',
     'dashboard:resident',
     'amenities:book',
+    'parking:violation',
   ],
   [Role.JOINT_SECRETARY]: [
     'residents:read',
@@ -45,6 +48,8 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'documents:approve',
     'dashboard:resident',
     'amenities:book',
+    'parking:assign',
+    'parking:violation',
   ],
   [Role.COMMITTEE_MEMBER]: [
     'residents:read',
@@ -55,6 +60,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'documents:request',
     'dashboard:resident',
     'amenities:book',
+    'parking:violation',
   ],
   [Role.TOWER_CAPTAIN]: [
     'tower:read',
@@ -67,11 +73,12 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'documents:request',
     'dashboard:resident',
     'amenities:book',
+    'parking:violation',
   ],
   [Role.ACCOUNTANT]: ['finance:read', 'finance:write'],
   [Role.FACILITY_MANAGER]: ['amenities:read', 'amenities:write', 'vendors:read'],
-  [Role.SECURITY_SUPERVISOR]: ['security:read', 'security:write'],
-  [Role.SECURITY_GUARD]: ['security:write'],
+  [Role.SECURITY_SUPERVISOR]: ['security:read', 'security:write', 'parking:violation'],
+  [Role.SECURITY_GUARD]: ['security:write', 'parking:violation'],
   [Role.MAINTENANCE_STAFF]: ['complaints:update'],
   [Role.OWNER_RESIDENT]: [
     'resident:self',
@@ -83,6 +90,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'documents:request',
     'dashboard:resident',
     'amenities:book',
+    'parking:violation',
   ],
   [Role.OWNER_NONRESIDENT]: [
     'resident:self',
@@ -94,6 +102,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'documents:request',
     'dashboard:resident',
     'amenities:book',
+    'parking:violation',
   ],
   [Role.TENANT]: [
     'resident:self',
@@ -103,6 +112,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'security:preapprove',
     'documents:request',
     'amenities:book',
+    'parking:violation',
   ],
   [Role.FAMILY_MEMBER]: [
     'resident:view',
@@ -113,5 +123,6 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'documents:request',
     'dashboard:resident',
     'amenities:book',
+    'parking:violation',
   ],
 };
