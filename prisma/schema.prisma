@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Society {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  address   String?
+  city      String
+  state     String
+  pincode   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+  flats Flat[]
+
+  @@map("societies")
+}
+
+model User {
+  id        String  @id @default(uuid())
+  phone     String  @unique
+  name      String
+  email     String? @unique
+  password  String?
+  role      String
+  societyId String
+  flatId    String?
+  towerId   String?
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  flat      Flat?    @relation(fields: [flatId], references: [id])
+
+  @@map("users")
+}
+
+model Flat {
+  id         String @id @default(uuid())
+  flatNumber String
+  tower      String
+  floor      Int
+  flatType   String
+  societyId  String
+
+  society Society @relation(fields: [societyId], references: [id])
+  users   User[]
+
+  @@unique([societyId, flatNumber, tower])
+  @@map("flats")
+}
