@@ -20,6 +20,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'documents:request',
     'documents:approve',
     'dashboard:resident',
+    'amenities:book',
   ],
   [Role.TREASURER]: [
     'finance:read',
@@ -30,6 +31,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'documents:request',
     'dashboard:treasurer',
     'dashboard:resident',
+    'amenities:book',
   ],
   [Role.JOINT_SECRETARY]: [
     'residents:read',
@@ -42,6 +44,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'documents:request',
     'documents:approve',
     'dashboard:resident',
+    'amenities:book',
   ],
   [Role.COMMITTEE_MEMBER]: [
     'residents:read',
@@ -51,6 +54,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'security:preapprove',
     'documents:request',
     'dashboard:resident',
+    'amenities:book',
   ],
   [Role.TOWER_CAPTAIN]: [
     'tower:read',
@@ -62,6 +66,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'security:preapprove',
     'documents:request',
     'dashboard:resident',
+    'amenities:book',
   ],
   [Role.ACCOUNTANT]: ['finance:read', 'finance:write'],
   [Role.FACILITY_MANAGER]: ['amenities:read', 'amenities:write', 'vendors:read'],
@@ -77,6 +82,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'security:preapprove',
     'documents:request',
     'dashboard:resident',
+    'amenities:book',
   ],
   [Role.OWNER_NONRESIDENT]: [
     'resident:self',
@@ -87,6 +93,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'security:preapprove',
     'documents:request',
     'dashboard:resident',
+    'amenities:book',
   ],
   [Role.TENANT]: [
     'resident:self',
@@ -95,6 +102,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'meetings:vote',
     'security:preapprove',
     'documents:request',
+    'amenities:book',
   ],
   [Role.FAMILY_MEMBER]: [
     'resident:view',
@@ -104,5 +112,6 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'security:preapprove',
     'documents:request',
     'dashboard:resident',
+    'amenities:book',
   ],
 };

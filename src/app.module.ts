@@ -15,6 +15,7 @@ import { MeetingsModule } from './modules/meetings/meetings.module';
 import { SecurityModule } from './modules/security/security.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { AmenitiesModule } from './modules/amenities/amenities.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     SecurityModule,
     DocumentsModule,
     DashboardModule,
+    AmenitiesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGlobalGuard },
