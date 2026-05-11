@@ -20,6 +20,7 @@ import { WebhookModule } from './modules/webhook/webhook.module';
 import { ParkingModule } from './modules/parking/parking.module';
 import { VendorsModule } from './modules/vendors/vendors.module';
 import { StaffModule } from './modules/staff/staff.module';
+import { AdminSettingsModule } from './modules/admin-settings/admin-settings.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { StaffModule } from './modules/staff/staff.module';
     ParkingModule,
     VendorsModule,
     StaffModule,
+    AdminSettingsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGlobalGuard },

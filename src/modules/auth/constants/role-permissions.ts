@@ -26,6 +26,8 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'vendors:read',
     'vendors:write',
     'staff:attendance',
+    'settings:society',
+    'settings:roles',
   ],
   [Role.TREASURER]: [
     'finance:read',
@@ -39,6 +41,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'amenities:book',
     'parking:violation',
     'vendors:read',
+    'settings:roles',
   ],
   [Role.JOINT_SECRETARY]: [
     'residents:read',
