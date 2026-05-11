@@ -19,6 +19,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'security:preapprove',
     'documents:request',
     'documents:approve',
+    'dashboard:resident',
   ],
   [Role.TREASURER]: [
     'finance:read',
@@ -27,6 +28,8 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'meetings:vote',
     'security:preapprove',
     'documents:request',
+    'dashboard:treasurer',
+    'dashboard:resident',
   ],
   [Role.JOINT_SECRETARY]: [
     'residents:read',
@@ -38,6 +41,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'security:preapprove',
     'documents:request',
     'documents:approve',
+    'dashboard:resident',
   ],
   [Role.COMMITTEE_MEMBER]: [
     'residents:read',
@@ -46,6 +50,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'meetings:vote',
     'security:preapprove',
     'documents:request',
+    'dashboard:resident',
   ],
   [Role.TOWER_CAPTAIN]: [
     'tower:read',
@@ -56,6 +61,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'meetings:vote',
     'security:preapprove',
     'documents:request',
+    'dashboard:resident',
   ],
   [Role.ACCOUNTANT]: ['finance:read', 'finance:write'],
   [Role.FACILITY_MANAGER]: ['amenities:read', 'amenities:write', 'vendors:read'],
@@ -70,6 +76,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'meetings:vote',
     'security:preapprove',
     'documents:request',
+    'dashboard:resident',
   ],
   [Role.OWNER_NONRESIDENT]: [
     'resident:self',
@@ -79,6 +86,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'meetings:vote',
     'security:preapprove',
     'documents:request',
+    'dashboard:resident',
   ],
   [Role.TENANT]: [
     'resident:self',
@@ -95,5 +103,6 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'meetings:vote',
     'security:preapprove',
     'documents:request',
+    'dashboard:resident',
   ],
 };
