@@ -13,6 +13,7 @@ import { FinanceModule } from './modules/finance/finance.module';
 import { ComplaintsModule } from './modules/complaints/complaints.module';
 import { MeetingsModule } from './modules/meetings/meetings.module';
 import { SecurityModule } from './modules/security/security.module';
+import { DocumentsModule } from './modules/documents/documents.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { SecurityModule } from './modules/security/security.module';
     ComplaintsModule,
     MeetingsModule,
     SecurityModule,
+    DocumentsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGlobalGuard },

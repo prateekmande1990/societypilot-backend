@@ -26,6 +26,7 @@ model Society {
   votes      MeetingVote[]
   visitors   Visitor[]
   preApprovals VisitorPreApproval[]
+  documentRequests DocumentRequest[]
 
   @@map("societies")
 }
@@ -52,6 +53,8 @@ model User {
   meetings   Meeting[]
   votes      MeetingVote[]
   visitorPreApprovals VisitorPreApproval[]
+  documentRequests     DocumentRequest[]
+  approvedDocuments    DocumentRequest[] @relation("DocumentApprovedBy")
 
   @@map("users")
 }
@@ -168,6 +171,28 @@ model VisitorPreApproval {
 
   @@index([societyId, status])
   @@map("visitor_pre_approvals")
+}
+
+model DocumentRequest {
+  id            String   @id @default(uuid())
+  societyId     String
+  userId        String
+  approvedById  String?
+  documentType  String
+  reason        String?
+  status        String   @default("PENDING")
+  fileUrl       String?
+  requestedAt   DateTime @default(now())
+  approvedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  society    Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  approvedBy User?   @relation("DocumentApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@index([societyId, status])
+  @@map("document_requests")
 }
 
 model Bill {

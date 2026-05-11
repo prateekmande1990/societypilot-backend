@@ -17,6 +17,8 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'meetings:vote',
     'security:write',
     'security:preapprove',
+    'documents:request',
+    'documents:approve',
   ],
   [Role.TREASURER]: [
     'finance:read',
@@ -24,6 +26,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'finance:approve',
     'meetings:vote',
     'security:preapprove',
+    'documents:request',
   ],
   [Role.JOINT_SECRETARY]: [
     'residents:read',
@@ -33,6 +36,8 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'meetings:write',
     'meetings:vote',
     'security:preapprove',
+    'documents:request',
+    'documents:approve',
   ],
   [Role.COMMITTEE_MEMBER]: [
     'residents:read',
@@ -40,6 +45,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'complaints:write',
     'meetings:vote',
     'security:preapprove',
+    'documents:request',
   ],
   [Role.TOWER_CAPTAIN]: [
     'tower:read',
@@ -49,6 +55,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'meetings:write',
     'meetings:vote',
     'security:preapprove',
+    'documents:request',
   ],
   [Role.ACCOUNTANT]: ['finance:read', 'finance:write'],
   [Role.FACILITY_MANAGER]: ['amenities:read', 'amenities:write', 'vendors:read'],
@@ -62,6 +69,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'payments:write',
     'meetings:vote',
     'security:preapprove',
+    'documents:request',
   ],
   [Role.OWNER_NONRESIDENT]: [
     'resident:self',
@@ -70,6 +78,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'complaints:read',
     'meetings:vote',
     'security:preapprove',
+    'documents:request',
   ],
   [Role.TENANT]: [
     'resident:self',
@@ -77,6 +86,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'complaints:read',
     'meetings:vote',
     'security:preapprove',
+    'documents:request',
   ],
   [Role.FAMILY_MEMBER]: [
     'resident:view',
@@ -84,5 +94,6 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     'complaints:read',
     'meetings:vote',
     'security:preapprove',
+    'documents:request',
   ],
 };
