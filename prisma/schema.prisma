@@ -24,6 +24,8 @@ model Society {
   complaints Complaint[]
   meetings   Meeting[]
   votes      MeetingVote[]
+  visitors   Visitor[]
+  preApprovals VisitorPreApproval[]
 
   @@map("societies")
 }
@@ -49,6 +51,7 @@ model User {
   complaints Complaint[]
   meetings   Meeting[]
   votes      MeetingVote[]
+  visitorPreApprovals VisitorPreApproval[]
 
   @@map("users")
 }
@@ -126,6 +129,45 @@ model MeetingVote {
   @@unique([meetingId, userId])
   @@index([societyId, meetingId])
   @@map("meeting_votes")
+}
+
+model Visitor {
+  id          String   @id @default(uuid())
+  societyId   String
+  name        String
+  phone       String?
+  purpose     String?
+  vehicleNo   String?
+  status      String   @default("ENTERED")
+  entryAt     DateTime @default(now())
+  exitAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  @@index([societyId, entryAt])
+  @@map("visitors")
+}
+
+model VisitorPreApproval {
+  id           String   @id @default(uuid())
+  societyId    String
+  userId       String
+  visitorName  String
+  visitorPhone String?
+  purpose      String?
+  validFrom    DateTime @default(now())
+  validUntil   DateTime
+  status       String   @default("ACTIVE")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([societyId, status])
+  @@map("visitor_pre_approvals")
 }
 
 model Bill {

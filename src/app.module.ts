@@ -12,6 +12,7 @@ import { ResidentsModule } from './modules/residents/residents.module';
 import { FinanceModule } from './modules/finance/finance.module';
 import { ComplaintsModule } from './modules/complaints/complaints.module';
 import { MeetingsModule } from './modules/meetings/meetings.module';
+import { SecurityModule } from './modules/security/security.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { MeetingsModule } from './modules/meetings/meetings.module';
     FinanceModule,
     ComplaintsModule,
     MeetingsModule,
+    SecurityModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGlobalGuard },
