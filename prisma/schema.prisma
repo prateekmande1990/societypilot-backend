@@ -31,6 +31,8 @@ model Society {
   amenityBookings  AmenityBooking[]
   parkingSlots     ParkingSlot[]
   parkingViolations ParkingViolation[]
+  vendors          Vendor[]
+  staffAttendances StaffAttendance[]
 
   @@map("societies")
 }
@@ -62,6 +64,7 @@ model User {
   amenityBookings      AmenityBooking[]
   parkingSlots         ParkingSlot[]
   parkingViolations    ParkingViolation[]
+  recordedAttendances  StaffAttendance[] @relation("AttendanceRecordedBy")
 
   @@map("users")
 }
@@ -275,6 +278,44 @@ model ParkingViolation {
 
   @@index([societyId, status])
   @@map("parking_violations")
+}
+
+model Vendor {
+  id          String   @id @default(uuid())
+  societyId   String
+  name        String
+  category    String
+  phone       String?
+  email       String?
+  notes       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  @@index([societyId, category])
+  @@map("vendors")
+}
+
+model StaffAttendance {
+  id           String   @id @default(uuid())
+  societyId    String
+  staffName    String
+  role         String
+  status       String
+  checkInAt    DateTime @default(now())
+  checkOutAt   DateTime?
+  recordedById String
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  society    Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  recordedBy User    @relation("AttendanceRecordedBy", fields: [recordedById], references: [id], onDelete: Cascade)
+
+  @@index([societyId, checkInAt])
+  @@map("staff_attendances")
 }
 
 model Bill {
