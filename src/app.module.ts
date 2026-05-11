@@ -10,6 +10,7 @@ import { SocietyContextGuard } from './common/guards/society-context.guard';
 import { TowerScopeGuard } from './common/guards/tower-scope.guard';
 import { ResidentsModule } from './modules/residents/residents.module';
 import { FinanceModule } from './modules/finance/finance.module';
+import { ComplaintsModule } from './modules/complaints/complaints.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { FinanceModule } from './modules/finance/finance.module';
     AuthModule,
     ResidentsModule,
     FinanceModule,
+    ComplaintsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGlobalGuard },

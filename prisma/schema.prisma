@@ -21,6 +21,7 @@ model Society {
   flats Flat[]
   bills Bill[]
   payments Payment[]
+  complaints Complaint[]
 
   @@map("societies")
 }
@@ -43,6 +44,7 @@ model User {
   flat      Flat?    @relation(fields: [flatId], references: [id])
   bills     Bill[]
   payments  Payment[]
+  complaints Complaint[]
 
   @@map("users")
 }
@@ -58,9 +60,33 @@ model Flat {
   society Society @relation(fields: [societyId], references: [id])
   users   User[]
   bills   Bill[]
+  complaints Complaint[]
 
   @@unique([societyId, flatNumber, tower])
   @@map("flats")
+}
+
+model Complaint {
+  id          String   @id @default(uuid())
+  societyId   String
+  userId      String
+  flatId      String?
+  title       String
+  description String
+  category    String
+  status      String   @default("OPEN")
+  priority    String   @default("MEDIUM")
+  isAnonymous Boolean  @default(false)
+  escalatedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flat    Flat?   @relation(fields: [flatId], references: [id], onDelete: SetNull)
+
+  @@index([societyId, status])
+  @@map("complaints")
 }
 
 model Bill {
