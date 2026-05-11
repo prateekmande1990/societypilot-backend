@@ -21,6 +21,7 @@ import { ParkingModule } from './modules/parking/parking.module';
 import { VendorsModule } from './modules/vendors/vendors.module';
 import { StaffModule } from './modules/staff/staff.module';
 import { AdminSettingsModule } from './modules/admin-settings/admin-settings.module';
+import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AdminSettingsModule } from './modules/admin-settings/admin-settings.mod
     VendorsModule,
     StaffModule,
     AdminSettingsModule,
+    PlatformAdminModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGlobalGuard },
