@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, Query, Req } from '@nestjs/common';
 import { FinanceService } from './finance.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
@@ -32,6 +32,16 @@ export class FinanceController {
     return this.financeService.generateBills(req.user.societyId, dto);
   }
 
+  @Get('bills/generate/:jobId/status')
+  @Roles(Role.CHAIRMAN, Role.SECRETARY, Role.TREASURER, Role.ACCOUNTANT)
+  @Permissions('finance:read')
+  billGenerationStatus(
+    @Req() req: { user: { societyId: string } },
+    @Param('jobId') jobId: string,
+  ) {
+    return this.financeService.getBillGenerationStatus(req.user.societyId, jobId);
+  }
+
   @Post('payments')
   @Roles(Role.CHAIRMAN, Role.SECRETARY, Role.ACCOUNTANT, Role.TREASURER)
   @Permissions('finance:write')
@@ -44,8 +54,11 @@ export class FinanceController {
 
   @Public()
   @Post('payments/razorpay/webhook')
-  razorpayWebhook(@Body() payload: Record<string, unknown>) {
-    return this.financeService.razorpayWebhook(payload);
+  razorpayWebhook(
+    @Headers('x-razorpay-signature') signature: string | undefined,
+    @Body() payload: Record<string, unknown>,
+  ) {
+    return this.financeService.razorpayWebhook(signature, payload);
   }
 
   @Get('defaulters')

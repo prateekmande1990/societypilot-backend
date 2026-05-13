@@ -1,4 +1,4 @@
-import { Body, Controller, Patch, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Query, Req } from '@nestjs/common';
 import { AdminSettingsService } from './admin-settings.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Permissions } from '../../common/decorators/permissions.decorator';
@@ -26,5 +26,18 @@ export class AdminSettingsController {
   @Permissions('settings:roles')
   assignUserRole(@Req() req: { user: JwtPayload }, @Body() dto: AssignUserRoleDto) {
     return this.adminSettingsService.assignUserRole(req.user, dto);
+  }
+
+  @Get('audit-logs')
+  @Roles(Role.CHAIRMAN, Role.SECRETARY)
+  @Permissions('settings:roles')
+  auditLogs(
+    @Req() req: { user: JwtPayload },
+    @Query('limit') limit?: string,
+  ) {
+    return this.adminSettingsService.listAuditLogs(
+      req.user,
+      limit ? Number(limit) : undefined,
+    );
   }
 }

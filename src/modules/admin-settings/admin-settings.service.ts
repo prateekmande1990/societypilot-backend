@@ -3,10 +3,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateSocietyProfileDto } from './dto/update-society-profile.dto';
 import { AssignUserRoleDto } from './dto/assign-user-role.dto';
 import { JwtPayload } from '../auth/types/jwt-payload.type';
+import { AuditLogService } from '../../common/services/audit-log.service';
 
 @Injectable()
 export class AdminSettingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
 
   async updateSocietyProfile(user: JwtPayload, dto: UpdateSocietyProfileDto) {
     const society = await this.prisma.society.findUnique({
@@ -28,5 +32,10 @@ export class AdminSettingsService {
       where: { id: dto.userId },
       data: { role: dto.role },
     });
+  }
+
+  async listAuditLogs(user: JwtPayload, limit?: number) {
+    const safeLimit = Math.min(Math.max(limit ?? 100, 1), 500);
+    return this.auditLogService.listBySociety(user.societyId, safeLimit);
   }
 }

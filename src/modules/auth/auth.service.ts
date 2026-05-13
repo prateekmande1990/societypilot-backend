@@ -13,22 +13,14 @@ import { ROLE_PERMISSIONS } from './constants/role-permissions';
 import { Role } from '../../common/enums/role.enum';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtPayload } from './types/jwt-payload.type';
-
-type OtpEntry = {
-  otp: string;
-  expiresAt: number;
-  attempts: number;
-  lockUntil?: number;
-};
+import { RuntimeStoreService } from '../../common/services/runtime-store.service';
 
 @Injectable()
 export class AuthService {
-  private readonly otpStore = new Map<string, OtpEntry>();
-  private readonly refreshStore = new Map<string, { userId: string; expiresAt: number }>();
-
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private readonly store: RuntimeStoreService,
   ) {}
 
   async sendOtp(dto: SendOtpDto) {
@@ -38,11 +30,15 @@ export class AuthService {
     }
 
     const otp = String(randomInt(100000, 999999));
-    this.otpStore.set(dto.phone, {
-      otp,
-      attempts: 0,
-      expiresAt: Date.now() + 5 * 60 * 1000,
-    });
+    await this.store.set(
+      this.otpKey(dto.phone),
+      JSON.stringify({
+        otp,
+        attempts: 0,
+      }),
+      5 * 60,
+    );
+    await this.store.del(this.otpLockKey(dto.phone));
 
     return {
       message: 'OTP sent successfully',
@@ -53,30 +49,35 @@ export class AuthService {
   }
 
   async verifyOtp(dto: VerifyOtpDto) {
-    const entry = this.otpStore.get(dto.phone);
-    if (!entry) {
+    const entryRaw = await this.store.get(this.otpKey(dto.phone));
+    if (!entryRaw) {
       throw new BadRequestException('OTP not found. Please request OTP again');
     }
 
-    if (entry.lockUntil && entry.lockUntil > Date.now()) {
+    const lockUntilRaw = await this.store.get(this.otpLockKey(dto.phone));
+    if (lockUntilRaw && Number(lockUntilRaw) > Date.now()) {
       throw new UnauthorizedException('Too many failed attempts. Try again later');
     }
 
-    if (entry.expiresAt < Date.now()) {
-      this.otpStore.delete(dto.phone);
-      throw new UnauthorizedException('OTP expired');
-    }
+    const entry = JSON.parse(entryRaw) as {
+      otp: string;
+      attempts: number;
+    };
 
     if (entry.otp !== dto.otp) {
       entry.attempts += 1;
       if (entry.attempts >= 3) {
-        entry.lockUntil = Date.now() + 15 * 60 * 1000;
+        await this.store.set(
+          this.otpLockKey(dto.phone),
+          String(Date.now() + 15 * 60 * 1000),
+          15 * 60,
+        );
       }
-      this.otpStore.set(dto.phone, entry);
+      await this.store.set(this.otpKey(dto.phone), JSON.stringify(entry), 5 * 60);
       throw new UnauthorizedException('Invalid OTP');
     }
 
-    this.otpStore.delete(dto.phone);
+    await this.store.del(this.otpKey(dto.phone));
 
     const user = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
     if (!user) {
@@ -97,10 +98,11 @@ export class AuthService {
 
   async refresh(dto: RefreshTokenDto) {
     const parsed = this.verifyRefreshToken(dto.refreshToken);
-    const stored = this.refreshStore.get(dto.refreshToken);
+    const refreshKey = this.refreshKey(dto.refreshToken);
+    const storedUserId = await this.store.get(refreshKey);
 
-    if (!stored || stored.expiresAt < Date.now()) {
-      this.refreshStore.delete(dto.refreshToken);
+    if (!storedUserId || storedUserId !== parsed.userId) {
+      await this.store.del(refreshKey);
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
@@ -109,7 +111,7 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    this.refreshStore.delete(dto.refreshToken);
+    await this.store.del(refreshKey);
 
     const payload: JwtPayload = {
       userId: user.id,
@@ -124,11 +126,11 @@ export class AuthService {
   }
 
   async logout(dto: RefreshTokenDto) {
-    this.refreshStore.delete(dto.refreshToken);
+    await this.store.del(this.refreshKey(dto.refreshToken));
     return { message: 'Logged out successfully' };
   }
 
-  private issueTokens(payload: JwtPayload) {
+  private async issueTokens(payload: JwtPayload) {
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_ACCESS_SECRET ?? 'dev-secret',
       expiresIn: '15m',
@@ -142,10 +144,11 @@ export class AuthService {
       },
     );
 
-    this.refreshStore.set(refreshToken, {
-      userId: payload.userId,
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-    });
+    await this.store.set(
+      this.refreshKey(refreshToken),
+      payload.userId,
+      7 * 24 * 60 * 60,
+    );
 
     return {
       accessToken,
@@ -162,5 +165,17 @@ export class AuthService {
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  private otpKey(phone: string) {
+    return `auth:otp:${phone}`;
+  }
+
+  private otpLockKey(phone: string) {
+    return `auth:otp:lock:${phone}`;
+  }
+
+  private refreshKey(refreshToken: string) {
+    return `auth:refresh:${refreshToken}`;
   }
 }

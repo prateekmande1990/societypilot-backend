@@ -38,8 +38,12 @@ export class ComplaintsController {
   @Patch(':id/status')
   @Roles(Role.CHAIRMAN, Role.SECRETARY, Role.JOINT_SECRETARY, Role.MAINTENANCE_STAFF)
   @Permissions('complaints:update')
-  updateStatus(@Param('id') id: string, @Body() dto: UpdateComplaintStatusDto) {
-    return this.complaintsService.updateStatus(id, dto);
+  updateStatus(
+    @Req() req: { user: JwtPayload },
+    @Param('id') id: string,
+    @Body() dto: UpdateComplaintStatusDto,
+  ) {
+    return this.complaintsService.updateStatus(req.user, id, dto);
   }
 
   @Post(':id/escalate')
@@ -56,5 +60,14 @@ export class ComplaintsController {
   @Permissions('complaints:write')
   escalate(@Param('id') id: string) {
     return this.complaintsService.escalate(id);
+  }
+
+  @Post('escalations/run')
+  @Roles(Role.CHAIRMAN, Role.SECRETARY, Role.SUPER_ADMIN)
+  @Permissions('complaints:update')
+  runEscalations(@Req() req: { user: JwtPayload }) {
+    const scope =
+      req.user.role === Role.SUPER_ADMIN ? undefined : req.user.societyId;
+    return this.complaintsService.runAutoEscalation(scope);
   }
 }

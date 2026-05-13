@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateResidentDto } from './dto/create-resident.dto';
 import { UpdateResidentDto } from './dto/update-resident.dto';
@@ -50,6 +54,22 @@ export class ResidentsService {
   async moveOut(id: string) {
     const exists = await this.prisma.user.findUnique({ where: { id } });
     if (!exists) throw new NotFoundException('Resident not found');
+
+    const overdueBill = await this.prisma.bill.findFirst({
+      where: {
+        societyId: exists.societyId,
+        userId: exists.id,
+        status: { not: 'PAID' },
+      },
+      orderBy: { dueDate: 'asc' },
+    });
+
+    if (overdueBill) {
+      throw new UnprocessableEntityException(
+        `Outstanding dues must be cleared before move-out. Pending bill: ${overdueBill.period} (${overdueBill.amount}).`,
+      );
+    }
+
     return this.prisma.user.update({
       where: { id },
       data: {
