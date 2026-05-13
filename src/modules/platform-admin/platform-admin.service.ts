@@ -311,7 +311,126 @@ export class PlatformAdminService {
       },
     });
   }
+async onboardingStatus(societyId: string) {
+  const onboarding =
+    await this.prisma.societyOnboarding.findUnique({
+      where: {
+        societyId,
+      },
+    });
 
+  if (!onboarding) {
+    throw new NotFoundException(
+      'Onboarding not found',
+    );
+  }
+
+  return onboarding;
+}
+
+async completeTowers(societyId: string) {
+  return this.updateOnboardingProgress(
+    societyId,
+    {
+      towersConfigured: true,
+    },
+  );
+}
+
+async completeFlats(societyId: string) {
+  return this.updateOnboardingProgress(
+    societyId,
+    {
+      flatsImported: true,
+    },
+  );
+}
+
+async completeMaintenance(societyId: string) {
+  return this.updateOnboardingProgress(
+    societyId,
+    {
+      maintenanceConfigured: true,
+    },
+  );
+}
+
+async completePaymentGateway(societyId: string) {
+  return this.updateOnboardingProgress(
+    societyId,
+    {
+      paymentGatewayConfigured: true,
+    },
+  );
+}
+
+private async updateOnboardingProgress(
+  societyId: string,
+  updates: Partial<{
+    towersConfigured: boolean;
+    flatsImported: boolean;
+    maintenanceConfigured: boolean;
+    paymentGatewayConfigured: boolean;
+  }>,
+) {
+  const existing =
+    await this.prisma.societyOnboarding.findUnique({
+      where: {
+        societyId,
+      },
+    });
+
+  if (!existing) {
+    throw new NotFoundException(
+      'Onboarding not found',
+    );
+  }
+
+  const updated =
+    await this.prisma.societyOnboarding.update({
+      where: {
+        societyId,
+      },
+      data: {
+        ...updates,
+      },
+    });
+
+  const completedSteps = [
+    updated.profileCompleted,
+    updated.chairmanCreated,
+    updated.towersConfigured,
+    updated.flatsImported,
+    updated.maintenanceConfigured,
+    updated.paymentGatewayConfigured,
+  ].filter(Boolean).length;
+
+  const completedPercentage =
+    Math.round((completedSteps / 6) * 100);
+
+  const finalOnboarding =
+    await this.prisma.societyOnboarding.update({
+      where: {
+        societyId,
+      },
+      data: {
+        completedPercentage,
+      },
+    });
+
+  if (completedPercentage === 100) {
+    await this.prisma.society.update({
+      where: {
+        id: societyId,
+      },
+      data: {
+        status: 'ACTIVE',
+      },
+    });
+  }
+
+  return finalOnboarding;
+}
   async impersonate(societyId: string) {
     const society = await this.prisma.society.findUnique({
       where: {
