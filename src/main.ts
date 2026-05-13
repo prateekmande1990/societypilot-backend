@@ -7,6 +7,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const port = Number(process.env.PORT ?? 3000);
 
   app.enableCors({ origin: '*' });
   app.setGlobalPrefix('v1');
@@ -41,11 +42,11 @@ async function bootstrap() {
     });
   }
 
-  await app.listen(3000);
-  console.log('SocietyPilot Backend is running on: http://localhost:3000/v1');
+  await app.listen(port);
+  console.log(`SocietyPilot Backend is running on: http://localhost:${port}/v1`);
   console.log(`Queue mode: ${process.env.REDIS_URL ? 'enabled (Redis)' : 'disabled (sync fallback)'}`);
   if (swaggerEnabled) {
-    console.log('Swagger docs: http://localhost:3000/v1/docs');
+    console.log(`Swagger docs: http://localhost:${port}/v1/docs`);
   }
 }
 
