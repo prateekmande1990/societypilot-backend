@@ -7,64 +7,95 @@ datasource db {
 }
 
 model Society {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  address   String?
-  city      String
-  state     String
-  pincode   String?
+  id      String  @id @default(uuid())
+  name    String
+  slug    String  @unique
+  address String?
+  city    String
+  state   String
+  pincode String?
+
+  status String @default("PENDING_SETUP")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users User[]
-  flats Flat[]
-  bills Bill[]
-  payments Payment[]
-  complaints Complaint[]
-  meetings   Meeting[]
-  votes      MeetingVote[]
-  visitors   Visitor[]
-  preApprovals VisitorPreApproval[]
-  documentRequests DocumentRequest[]
-  amenities        Amenity[]
-  amenityBookings  AmenityBooking[]
-  parkingSlots     ParkingSlot[]
+  users             User[]
+  flats             Flat[]
+  bills             Bill[]
+  payments          Payment[]
+  complaints        Complaint[]
+  meetings          Meeting[]
+  votes             MeetingVote[]
+  visitors          Visitor[]
+  preApprovals      VisitorPreApproval[]
+  documentRequests  DocumentRequest[]
+  amenities         Amenity[]
+  amenityBookings   AmenityBooking[]
+  parkingSlots      ParkingSlot[]
   parkingViolations ParkingViolation[]
-  vendors          Vendor[]
-  staffAttendances StaffAttendance[]
+  vendors           Vendor[]
+  staffAttendances  StaffAttendance[]
 
+  onboarding SocietyOnboarding?
+
+  @@index([city])
+  @@index([state])
+  @@index([status])
   @@map("societies")
 }
 
-model User {
-  id        String  @id @default(uuid())
-  phone     String  @unique
-  name      String
-  email     String? @unique
-  password  String?
-  role      String
-  societyId String
-  flatId    String?
-  towerId   String?
+model SocietyOnboarding {
+  id String @id @default(uuid())
 
-  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  societyId String @unique
+
+  profileCompleted         Boolean @default(false)
+  chairmanCreated          Boolean @default(false)
+  towersConfigured         Boolean @default(false)
+  flatsImported            Boolean @default(false)
+  maintenanceConfigured    Boolean @default(false)
+  paymentGatewayConfigured Boolean @default(false)
+
+  completedPercentage Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  flat      Flat?    @relation(fields: [flatId], references: [id])
-  bills     Bill[]
-  payments  Payment[]
-  complaints Complaint[]
-  meetings   Meeting[]
-  votes      MeetingVote[]
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  @@map("society_onboarding")
+}
+
+model User {
+  id               String  @id @default(uuid())
+  phone            String  @unique
+  name             String
+  email            String? @unique
+  password         String?
+  isOnboardingDone Boolean @default(false)
+  role             String
+  societyId        String
+  flatId           String?
+  towerId          String?
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  flat                Flat?                @relation(fields: [flatId], references: [id])
+  bills               Bill[]
+  payments            Payment[]
+  complaints          Complaint[]
+  meetings            Meeting[]
+  votes               MeetingVote[]
   visitorPreApprovals VisitorPreApproval[]
-  documentRequests     DocumentRequest[]
-  approvedDocuments    DocumentRequest[] @relation("DocumentApprovedBy")
-  amenityBookings      AmenityBooking[]
-  parkingSlots         ParkingSlot[]
-  parkingViolations    ParkingViolation[]
-  recordedAttendances  StaffAttendance[] @relation("AttendanceRecordedBy")
+  documentRequests    DocumentRequest[]
+  approvedDocuments   DocumentRequest[]    @relation("DocumentApprovedBy")
+  amenityBookings     AmenityBooking[]
+  parkingSlots        ParkingSlot[]
+  parkingViolations   ParkingViolation[]
+  recordedAttendances StaffAttendance[]    @relation("AttendanceRecordedBy")
 
   @@map("users")
 }
@@ -77,10 +108,10 @@ model Flat {
   flatType   String
   societyId  String
 
-  society Society @relation(fields: [societyId], references: [id])
-  users   User[]
-  bills   Bill[]
-  complaints Complaint[]
+  society      Society       @relation(fields: [societyId], references: [id])
+  users        User[]
+  bills        Bill[]
+  complaints   Complaint[]
   parkingSlots ParkingSlot[]
 
   @@unique([societyId, flatNumber, tower])
@@ -88,19 +119,19 @@ model Flat {
 }
 
 model Complaint {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   societyId   String
   userId      String
   flatId      String?
   title       String
   description String
   category    String
-  status      String   @default("OPEN")
-  priority    String   @default("MEDIUM")
-  isAnonymous Boolean  @default(false)
+  status      String    @default("OPEN")
+  priority    String    @default("MEDIUM")
+  isAnonymous Boolean   @default(false)
   escalatedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -120,8 +151,8 @@ model Meeting {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  society   Society      @relation(fields: [societyId], references: [id], onDelete: Cascade)
-  createdBy User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  society   Society       @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  createdBy User          @relation(fields: [createdById], references: [id], onDelete: Cascade)
   votes     MeetingVote[]
 
   @@index([societyId, scheduledAt])
@@ -146,17 +177,17 @@ model MeetingVote {
 }
 
 model Visitor {
-  id          String   @id @default(uuid())
-  societyId   String
-  name        String
-  phone       String?
-  purpose     String?
-  vehicleNo   String?
-  status      String   @default("ENTERED")
-  entryAt     DateTime @default(now())
-  exitAt      DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String    @id @default(uuid())
+  societyId String
+  name      String
+  phone     String?
+  purpose   String?
+  vehicleNo String?
+  status    String    @default("ENTERED")
+  entryAt   DateTime  @default(now())
+  exitAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
 
@@ -185,18 +216,18 @@ model VisitorPreApproval {
 }
 
 model DocumentRequest {
-  id            String   @id @default(uuid())
-  societyId     String
-  userId        String
-  approvedById  String?
-  documentType  String
-  reason        String?
-  status        String   @default("PENDING")
-  fileUrl       String?
-  requestedAt   DateTime @default(now())
-  approvedAt    DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String    @id @default(uuid())
+  societyId    String
+  userId       String
+  approvedById String?
+  documentType String
+  reason       String?
+  status       String    @default("PENDING")
+  fileUrl      String?
+  requestedAt  DateTime  @default(now())
+  approvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   society    Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
   user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -223,15 +254,15 @@ model Amenity {
 }
 
 model AmenityBooking {
-  id         String   @id @default(uuid())
-  societyId  String
-  amenityId  String
-  userId     String
-  startsAt   DateTime
-  endsAt     DateTime
-  status     String   @default("CONFIRMED")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(uuid())
+  societyId String
+  amenityId String
+  userId    String
+  startsAt  DateTime
+  endsAt    DateTime
+  status    String   @default("CONFIRMED")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
   amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
@@ -263,15 +294,15 @@ model ParkingSlot {
 }
 
 model ParkingViolation {
-  id          String   @id @default(uuid())
-  societyId   String
+  id           String   @id @default(uuid())
+  societyId    String
   reportedById String
-  slotNumber  String?
-  vehicleNo   String?
-  description String
-  status      String   @default("OPEN")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  slotNumber   String?
+  vehicleNo    String?
+  description  String
+  status       String   @default("OPEN")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   society    Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
   reportedBy User    @relation(fields: [reportedById], references: [id], onDelete: Cascade)
@@ -281,16 +312,16 @@ model ParkingViolation {
 }
 
 model Vendor {
-  id          String   @id @default(uuid())
-  societyId   String
-  name        String
-  category    String
-  phone       String?
-  email       String?
-  notes       String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  societyId String
+  name      String
+  category  String
+  phone     String?
+  email     String?
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
 
@@ -299,17 +330,17 @@ model Vendor {
 }
 
 model StaffAttendance {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   societyId    String
   staffName    String
   role         String
   status       String
-  checkInAt    DateTime @default(now())
+  checkInAt    DateTime  @default(now())
   checkOutAt   DateTime?
   recordedById String
   notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   society    Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
   recordedBy User    @relation("AttendanceRecordedBy", fields: [recordedById], references: [id], onDelete: Cascade)
@@ -341,18 +372,18 @@ model Bill {
 }
 
 model Payment {
-  id              String   @id @default(uuid())
-  societyId       String
-  userId          String
-  billId          String?
-  amount          Decimal  @db.Decimal(10, 2)
-  method          String
-  status          String   @default("SUCCESS")
-  razorpayOrderId String?  @unique
-  razorpayPaymentId String? @unique
-  paidAt          DateTime @default(now())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                String   @id @default(uuid())
+  societyId         String
+  userId            String
+  billId            String?
+  amount            Decimal  @db.Decimal(10, 2)
+  method            String
+  status            String   @default("SUCCESS")
+  razorpayOrderId   String?  @unique
+  razorpayPaymentId String?  @unique
+  paidAt            DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)

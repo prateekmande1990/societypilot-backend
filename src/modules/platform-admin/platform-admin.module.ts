@@ -5,8 +5,12 @@ import { PrismaModule } from '../../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  imports: [PrismaModule, JwtModule.register({})],
+  imports: [
+    PrismaModule,
+    JwtModule.register({}),
+  ],
   controllers: [PlatformAdminController],
   providers: [PlatformAdminService],
+  exports: [PlatformAdminService],
 })
 export class PlatformAdminModule {}

@@ -1,10 +1,19 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { PlatformAdminService } from './platform-admin.service';
 import { PlatformAdminLoginDto } from './dto/platform-admin-login.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { CreateSocietyDto } from './dto/create-society.dto';
+import { UpdateSocietyDto } from './dto/update-society.dto';
 
 @Controller('platform-admin')
 export class PlatformAdminController {
@@ -18,8 +27,20 @@ export class PlatformAdminController {
 
   @Get('societies')
   @Roles(Role.SUPER_ADMIN)
-  listSocieties() {
-    return this.platformAdminService.listSocieties();
+  listSocieties(
+    @Query('search') search?: string,
+    @Query('city') city?: string,
+    @Query('state') state?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.platformAdminService.listSocieties({
+      search,
+      city,
+      state,
+      page: Number(page ?? 1),
+      limit: Number(limit ?? 10),
+    });
   }
 
   @Post('societies')
@@ -32,6 +53,30 @@ export class PlatformAdminController {
   @Roles(Role.SUPER_ADMIN)
   societyDetail(@Param('id') id: string) {
     return this.platformAdminService.societyDetail(id);
+  }
+
+  @Patch('societies/:id')
+  @Roles(Role.SUPER_ADMIN)
+  updateSociety(
+    @Param('id') id: string,
+    @Body() dto: UpdateSocietyDto,
+  ) {
+    return this.platformAdminService.updateSociety(id, dto);
+  }
+
+  @Patch('societies/:id/status')
+  @Roles(Role.SUPER_ADMIN)
+  updateSocietyStatus(
+    @Param('id') id: string,
+    @Body('status') status: string,
+  ) {
+    return this.platformAdminService.updateSocietyStatus(id, status);
+  }
+
+  @Get('societies/:id/users')
+  @Roles(Role.SUPER_ADMIN)
+  societyUsers(@Param('id') id: string) {
+    return this.platformAdminService.societyUsers(id);
   }
 
   @Post('societies/:id/impersonate')
