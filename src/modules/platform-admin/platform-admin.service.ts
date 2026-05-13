@@ -13,9 +13,9 @@ export class PlatformAdminService {
   ) {}
 
   login(dto: PlatformAdminLoginDto) {
-    const adminEmail = process.env.PLATFORM_ADMIN_EMAIL ?? 'admin@societypilot.in';
-    const adminPassword = process.env.PLATFORM_ADMIN_PASSWORD ?? 'admin123';
-    const adminTotp = process.env.PLATFORM_ADMIN_TOTP ?? '000000';
+    const adminEmail = process.env.PLATFORM_ADMIN_EMAIL;
+    const adminPassword = process.env.PLATFORM_ADMIN_PASSWORD ;
+    const adminTotp = process.env.PLATFORM_ADMIN_TOTP ;
 
     if (
       dto.email !== adminEmail ||
@@ -35,7 +35,7 @@ export class PlatformAdminService {
         permissions: ['*'],
       },
       {
-        secret: process.env.JWT_ACCESS_SECRET ?? 'dev-secret',
+        secret: process.env.JWT_SECRET,
         expiresIn: '8h',
       },
     );
@@ -80,7 +80,7 @@ export class PlatformAdminService {
         impersonation: true,
       },
       {
-        secret: process.env.JWT_ACCESS_SECRET ?? 'dev-secret',
+        secret: process.env.JWT_SECRET ?? 'dev-secret',
         expiresIn: '30m',
       },
     );

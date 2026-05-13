@@ -132,7 +132,7 @@ export class AuthService {
 
   private async issueTokens(payload: JwtPayload) {
     const accessToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_ACCESS_SECRET ?? 'dev-secret',
+      secret: process.env.JWT_SECRET ?? 'dev-secret',
       expiresIn: '15m',
     });
 
