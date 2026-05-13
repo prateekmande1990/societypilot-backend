@@ -44,6 +44,53 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
+## Swagger API testing
+
+Swagger is enabled by default in local runs.
+
+1. Start the backend:
+
+```bash
+npm run start:dev
+```
+
+2. Open Swagger UI:
+
+```text
+http://localhost:3000/v1/docs
+```
+
+3. Authenticate protected endpoints:
+- Call `POST /v1/auth/otp/send`
+- Call `POST /v1/auth/otp/verify` and copy `accessToken`
+- In Swagger, click `Authorize` and paste: `Bearer <accessToken>`
+
+4. Optional env toggle:
+- Set `SWAGGER_ENABLED=false` to disable docs.
+
+## Bill Generation Queue Mode
+
+- If `REDIS_URL` is configured, `POST /v1/finance/bills/generate` runs in queue mode and returns a `jobId`.
+- Track progress with `GET /v1/finance/bills/generate/{jobId}/status`.
+- If `REDIS_URL` is not set, bill generation runs synchronously and returns immediate completion.
+
+## Audit Logs (Write Operations)
+
+- All write APIs (`POST`, `PUT`, `PATCH`, `DELETE`) are audit-logged globally.
+- Captured fields include: `societyId`, `userId`, `role`, `action`, `resource`, `recordId`, `path`, `method`, `ip`, `success`, `timestamp`.
+- View logs (Chairman/Secretary): `GET /v1/settings/audit-logs?limit=100`
+
+## Complaint Auto-Escalation
+
+- Automatic periodic escalation is enabled by default.
+- Rules implemented:
+  - `OPEN` complaints older than 24 hours -> escalated (`priority=HIGH`)
+  - `ASSIGNED` / `IN_PROGRESS` / `PENDING_PARTS` without updates for 48 hours -> escalated (`priority=CRITICAL`)
+- Manual trigger endpoint (Swagger test): `POST /v1/complaints/escalations/run`
+- Optional env controls:
+  - `COMPLAINT_ESCALATION_ENABLED=true|false`
+  - `COMPLAINT_ESCALATION_INTERVAL_MS=600000` (default 10 minutes)
+
 ## Run tests
 
 ```bash
