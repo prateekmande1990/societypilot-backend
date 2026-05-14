@@ -156,7 +156,14 @@ export class FinanceService {
         status: { not: 'PAID' },
         dueDate: { lt: new Date() },
       },
-      include: { user: true, flat: true },
+      include:  {
+  user: true,
+  flat: {
+    include: {
+      tower: true,
+    },
+  },
+},
       orderBy: { dueDate: 'asc' },
     });
 

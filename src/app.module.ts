@@ -29,6 +29,7 @@ import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TowersModule } from './modules/towers/towers.module';
+import { FlatsModule } from './modules/flats/flats.module';
 
 const useRedis = Boolean(process.env.REDIS_URL);
 
@@ -63,6 +64,7 @@ const useRedis = Boolean(process.env.REDIS_URL);
     AdminSettingsModule,
     PlatformAdminModule,
     TowersModule,
+    FlatsModule
   ],
   providers: [
     AppService,

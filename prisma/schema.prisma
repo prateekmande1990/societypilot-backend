@@ -21,6 +21,7 @@ model Society {
   updatedAt DateTime @updatedAt
 
   users             User[]
+  towers            Tower[]
   flats             Flat[]
   bills             Bill[]
   payments          Payment[]
@@ -38,7 +39,6 @@ model Society {
   staffAttendances  StaffAttendance[]
 
   onboarding SocietyOnboarding?
-  towers     Tower[]
 
   @@index([city])
   @@index([state])
@@ -84,6 +84,8 @@ model Tower {
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
 
+  flats Flat[]
+
   @@unique([societyId, name])
   @@index([societyId])
   @@map("towers")
@@ -96,16 +98,20 @@ model User {
   email            String? @unique
   password         String?
   isOnboardingDone Boolean @default(false)
-  role             String
-  societyId        String
-  flatId           String?
-  towerId          String?
+
+  role String
+
+  societyId String
+  flatId    String?
+  towerId   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
 
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  flat                Flat?                @relation(fields: [flatId], references: [id])
+  flat Flat? @relation(fields: [flatId], references: [id])
+
   bills               Bill[]
   payments            Payment[]
   complaints          Complaint[]
@@ -123,20 +129,47 @@ model User {
 }
 
 model Flat {
-  id         String @id @default(uuid())
-  flatNumber String
-  tower      String
-  floor      Int
-  flatType   String
-  societyId  String
+  id String @id @default(uuid())
 
-  society      Society       @relation(fields: [societyId], references: [id])
-  users        User[]
-  bills        Bill[]
-  complaints   Complaint[]
+  societyId String
+  towerId   String
+
+  flatNumber String
+
+  floor Int
+
+  type String?
+
+  areaSqFt Float?
+
+  occupancyStatus String @default("VACANT")
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  tower Tower @relation(fields: [towerId], references: [id], onDelete: Cascade)
+
+  users User[]
+
+  bills Bill[]
+
+  payments Payment[]
+
+  complaints Complaint[]
+
+  visitors Visitor[]
+
   parkingSlots ParkingSlot[]
 
-  @@unique([societyId, flatNumber, tower])
+  documentRequests DocumentRequest[]
+
+  @@unique([towerId, flatNumber])
+  @@index([societyId])
+  @@index([towerId])
   @@map("flats")
 }
 
@@ -152,46 +185,60 @@ model Complaint {
   priority    String    @default("MEDIUM")
   isAnonymous Boolean   @default(false)
   escalatedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  flat    Flat?   @relation(fields: [flatId], references: [id], onDelete: SetNull)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  flat Flat? @relation(fields: [flatId], references: [id], onDelete: SetNull)
 
   @@index([societyId, status])
   @@map("complaints")
 }
 
 model Meeting {
-  id          String   @id @default(uuid())
+  id String @id @default(uuid())
+
   societyId   String
   createdById String
-  title       String
-  agenda      String
-  scheduledAt DateTime
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 
-  society   Society       @relation(fields: [societyId], references: [id], onDelete: Cascade)
-  createdBy User          @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  votes     MeetingVote[]
+  title  String
+  agenda String
+
+  scheduledAt DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  votes MeetingVote[]
 
   @@index([societyId, scheduledAt])
   @@map("meetings")
 }
 
 model MeetingVote {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
+
   societyId String
   meetingId String
   userId    String
-  vote      String
+
+  vote String
+
   createdAt DateTime @default(now())
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
   meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([meetingId, userId])
   @@index([societyId, meetingId])
@@ -199,76 +246,115 @@ model MeetingVote {
 }
 
 model Visitor {
-  id        String    @id @default(uuid())
+  id String @id @default(uuid())
+
   societyId String
-  name      String
-  phone     String?
-  purpose   String?
+
+  name String
+
+  phone String?
+
+  purpose String?
+
   vehicleNo String?
-  status    String    @default("ENTERED")
-  entryAt   DateTime  @default(now())
-  exitAt    DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+
+  status String @default("ENTERED")
+
+  entryAt DateTime @default(now())
+
+  exitAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  flat    Flat?   @relation(fields: [flatId], references: [id])
+  flatId  String?
 
   @@index([societyId, entryAt])
   @@map("visitors")
 }
 
 model VisitorPreApproval {
-  id           String   @id @default(uuid())
-  societyId    String
-  userId       String
-  visitorName  String
+  id String @id @default(uuid())
+
+  societyId String
+  userId    String
+
+  visitorName String
+
   visitorPhone String?
-  purpose      String?
-  validFrom    DateTime @default(now())
-  validUntil   DateTime
-  status       String   @default("ACTIVE")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+
+  purpose String?
+
+  validFrom DateTime @default(now())
+
+  validUntil DateTime
+
+  status String @default("ACTIVE")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([societyId, status])
   @@map("visitor_pre_approvals")
 }
 
 model DocumentRequest {
-  id           String    @id @default(uuid())
-  societyId    String
-  userId       String
-  approvedById String?
-  documentType String
-  reason       String?
-  status       String    @default("PENDING")
-  fileUrl      String?
-  requestedAt  DateTime  @default(now())
-  approvedAt   DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id String @id @default(uuid())
 
-  society    Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  societyId String
+  userId    String
+
+  approvedById String?
+
+  documentType String
+
+  reason String?
+
+  status String @default("PENDING")
+
+  fileUrl String?
+
+  requestedAt DateTime @default(now())
+
+  approvedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   approvedBy User?   @relation("DocumentApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  flat       Flat?   @relation(fields: [flatId], references: [id])
+  flatId     String?
 
   @@index([societyId, status])
   @@map("document_requests")
 }
 
 model Amenity {
-  id          String   @id @default(uuid())
-  societyId   String
-  name        String
-  description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id String @id @default(uuid())
 
-  society  Society          @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  societyId String
+
+  name String
+
+  description String?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
   bookings AmenityBooking[]
 
   @@index([societyId, isActive])
@@ -276,39 +362,55 @@ model Amenity {
 }
 
 model AmenityBooking {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
+
   societyId String
   amenityId String
   userId    String
-  startsAt  DateTime
-  endsAt    DateTime
-  status    String   @default("CONFIRMED")
+
+  startsAt DateTime
+  endsAt   DateTime
+
+  status String @default("CONFIRMED")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
   amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([societyId, amenityId, startsAt])
   @@map("amenity_bookings")
 }
 
 model ParkingSlot {
-  id          String   @id @default(uuid())
-  societyId   String
-  flatId      String?
-  userId      String?
-  slotNumber  String
-  level       String?
+  id String @id @default(uuid())
+
+  societyId String
+
+  flatId String?
+
+  userId String?
+
+  slotNumber String
+
+  level String?
+
   vehicleType String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
-  flat    Flat?   @relation(fields: [flatId], references: [id], onDelete: SetNull)
-  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  flat Flat? @relation(fields: [flatId], references: [id], onDelete: SetNull)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@unique([societyId, slotNumber])
   @@index([societyId, flatId])
@@ -316,32 +418,48 @@ model ParkingSlot {
 }
 
 model ParkingViolation {
-  id           String   @id @default(uuid())
-  societyId    String
-  reportedById String
-  slotNumber   String?
-  vehicleNo    String?
-  description  String
-  status       String   @default("OPEN")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id String @id @default(uuid())
 
-  society    Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
-  reportedBy User    @relation(fields: [reportedById], references: [id], onDelete: Cascade)
+  societyId String
+
+  reportedById String
+
+  slotNumber String?
+
+  vehicleNo String?
+
+  description String
+
+  status String @default("OPEN")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  reportedBy User @relation(fields: [reportedById], references: [id], onDelete: Cascade)
 
   @@index([societyId, status])
   @@map("parking_violations")
 }
 
 model Vendor {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
+
   societyId String
-  name      String
-  category  String
-  phone     String?
-  email     String?
-  notes     String?
-  isActive  Boolean  @default(true)
+
+  name String
+
+  category String
+
+  phone String?
+
+  email String?
+
+  notes String?
+
+  isActive Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -352,41 +470,61 @@ model Vendor {
 }
 
 model StaffAttendance {
-  id           String    @id @default(uuid())
-  societyId    String
-  staffName    String
-  role         String
-  status       String
-  checkInAt    DateTime  @default(now())
-  checkOutAt   DateTime?
-  recordedById String
-  notes        String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id String @id @default(uuid())
 
-  society    Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
-  recordedBy User    @relation("AttendanceRecordedBy", fields: [recordedById], references: [id], onDelete: Cascade)
+  societyId String
+
+  staffName String
+
+  role String
+
+  status String
+
+  checkInAt DateTime @default(now())
+
+  checkOutAt DateTime?
+
+  recordedById String
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  recordedBy User @relation("AttendanceRecordedBy", fields: [recordedById], references: [id], onDelete: Cascade)
 
   @@index([societyId, checkInAt])
   @@map("staff_attendances")
 }
 
 model Bill {
-  id          String   @id @default(uuid())
-  societyId   String
-  userId      String
-  flatId      String
-  period      String
-  amount      Decimal  @db.Decimal(10, 2)
-  dueDate     DateTime
-  status      String   @default("PENDING")
-  generatedAt DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id String @id @default(uuid())
 
-  society  Society   @relation(fields: [societyId], references: [id], onDelete: Cascade)
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  flat     Flat      @relation(fields: [flatId], references: [id], onDelete: Cascade)
+  societyId String
+  userId    String
+  flatId    String
+
+  period String
+
+  amount Decimal @db.Decimal(10, 2)
+
+  dueDate DateTime
+
+  status String @default("PENDING")
+
+  generatedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  flat Flat @relation(fields: [flatId], references: [id], onDelete: Cascade)
+
   payments Payment[]
 
   @@index([societyId, period])
@@ -394,22 +532,35 @@ model Bill {
 }
 
 model Payment {
-  id                String   @id @default(uuid())
-  societyId         String
-  userId            String
-  billId            String?
-  amount            Decimal  @db.Decimal(10, 2)
-  method            String
-  status            String   @default("SUCCESS")
-  razorpayOrderId   String?  @unique
-  razorpayPaymentId String?  @unique
-  paidAt            DateTime @default(now())
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id String @id @default(uuid())
+
+  societyId String
+  userId    String
+
+  billId String?
+
+  amount Decimal @db.Decimal(10, 2)
+
+  method String
+
+  status String @default("SUCCESS")
+
+  razorpayOrderId String? @unique
+
+  razorpayPaymentId String? @unique
+
+  paidAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bill    Bill?   @relation(fields: [billId], references: [id], onDelete: SetNull)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bill   Bill?   @relation(fields: [billId], references: [id], onDelete: SetNull)
+  flat   Flat?   @relation(fields: [flatId], references: [id])
+  flatId String?
 
   @@index([societyId, status])
   @@map("payments")
