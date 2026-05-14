@@ -1,17 +1,33 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
+
 import { ResidentsService } from './residents.service';
+
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Permissions } from '../../common/decorators/permissions.decorator';
+
 import { Role } from '../../common/enums/role.enum';
+
 import { CreateResidentDto } from './dto/create-resident.dto';
 import { UpdateResidentDto } from './dto/update-resident.dto';
-import { Permissions } from '../../common/decorators/permissions.decorator';
+
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
-@Controller('residents')
+@Controller()
 export class ResidentsController {
-  constructor(private readonly residentsService: ResidentsService) {}
+  constructor(
+    private readonly residentsService: ResidentsService,
+  ) {}
 
-  @Get()
+  @Get('residents')
   @Roles(
     Role.CHAIRMAN,
     Role.SECRETARY,
@@ -22,30 +38,113 @@ export class ResidentsController {
   )
   @Permissions('residents:read')
   list(
-    @Req() req: { user: { societyId: string } },
+    @Req() req: {
+      user: {
+        societyId: string;
+      };
+    },
     @Query() query: PaginationQueryDto,
   ) {
-    return this.residentsService.list(req.user.societyId, query);
+    return this.residentsService.list(
+      req.user.societyId,
+      query,
+    );
   }
 
-  @Post()
-  @Roles(Role.CHAIRMAN, Role.SECRETARY, Role.JOINT_SECRETARY)
-  @Permissions('residents:write')
-  create(@Body() dto: CreateResidentDto) {
-    return this.residentsService.create(dto);
+  @Get('residents/stats')
+  @Roles(
+    Role.CHAIRMAN,
+    Role.SECRETARY,
+    Role.TREASURER,
+  )
+  @Permissions('residents:read')
+  stats(
+    @Req() req: {
+      user: {
+        societyId: string;
+      };
+    },
+  ) {
+    return this.residentsService.stats(
+      req.user.societyId,
+    );
   }
 
-  @Patch(':id')
-  @Roles(Role.CHAIRMAN, Role.SECRETARY, Role.JOINT_SECRETARY)
+  @Post(
+    'societies/:societyId/flats/:flatId/residents',
+  )
+  @Roles(
+    Role.CHAIRMAN,
+    Role.SECRETARY,
+    Role.JOINT_SECRETARY,
+  )
   @Permissions('residents:write')
-  update(@Param('id') id: string, @Body() dto: UpdateResidentDto) {
-    return this.residentsService.update(id, dto);
+  create(
+    @Param('societyId') societyId: string,
+    @Param('flatId') flatId: string,
+    @Body() dto: CreateResidentDto,
+  ) {
+    return this.residentsService.create(
+      societyId,
+      flatId,
+      dto,
+    );
   }
 
-  @Post(':id/moveout')
-  @Roles(Role.CHAIRMAN, Role.SECRETARY, Role.JOINT_SECRETARY)
+  @Patch(
+    'societies/:societyId/flats/:flatId/residents/:residentId',
+  )
+  @Roles(
+    Role.CHAIRMAN,
+    Role.SECRETARY,
+    Role.JOINT_SECRETARY,
+  )
   @Permissions('residents:write')
-  moveOut(@Param('id') id: string) {
-    return this.residentsService.moveOut(id);
+  update(
+    @Param('societyId') societyId: string,
+    @Param('flatId') flatId: string,
+    @Param('residentId') residentId: string,
+    @Body() dto: UpdateResidentDto,
+  ) {
+    return this.residentsService.update(
+      societyId,
+      flatId,
+      residentId,
+      dto,
+    );
+  }
+
+  @Get('flats/:flatId/residents')
+  @Roles(
+    Role.CHAIRMAN,
+    Role.SECRETARY,
+    Role.TREASURER,
+    Role.JOINT_SECRETARY,
+    Role.COMMITTEE_MEMBER,
+    Role.TOWER_CAPTAIN,
+  )
+  @Permissions('residents:read')
+  flatResidents(
+    @Param('flatId') flatId: string,
+  ) {
+    return this.residentsService.flatResidents(
+      flatId,
+    );
+  }
+
+  @Post('residents/:residentId/moveout')
+  @Roles(
+    Role.CHAIRMAN,
+    Role.SECRETARY,
+    Role.JOINT_SECRETARY,
+  )
+  @Permissions('residents:write')
+  moveOut(
+    @Param('residentId')
+    residentId: string,
+  ) {
+    return this.residentsService.moveOut(
+      residentId,
+    );
   }
 }

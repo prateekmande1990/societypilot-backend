@@ -7,36 +7,61 @@ datasource db {
 }
 
 model Society {
-  id      String  @id @default(uuid())
-  name    String
-  slug    String  @unique
+  id String @id @default(uuid())
+
+  name String
+
+  slug String @unique
+
   address String?
-  city    String
-  state   String
+
+  city String
+
+  state String
+
   pincode String?
 
   status String @default("PENDING_SETUP")
 
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
 
-  users             User[]
-  towers            Tower[]
-  flats             Flat[]
-  bills             Bill[]
-  payments          Payment[]
-  complaints        Complaint[]
-  meetings          Meeting[]
-  votes             MeetingVote[]
-  visitors          Visitor[]
-  preApprovals      VisitorPreApproval[]
-  documentRequests  DocumentRequest[]
-  amenities         Amenity[]
-  amenityBookings   AmenityBooking[]
-  parkingSlots      ParkingSlot[]
+  users User[]
+
+  towers Tower[]
+
+  flats Flat[]
+
+  residentFlats ResidentFlat[]
+
+  bills Bill[]
+
+  payments Payment[]
+
+  complaints Complaint[]
+
+  meetings Meeting[]
+
+  votes MeetingVote[]
+
+  visitors Visitor[]
+
+  preApprovals VisitorPreApproval[]
+
+  documentRequests DocumentRequest[]
+
+  amenities Amenity[]
+
+  amenityBookings AmenityBooking[]
+
+  parkingSlots ParkingSlot[]
+
   parkingViolations ParkingViolation[]
-  vendors           Vendor[]
-  staffAttendances  StaffAttendance[]
+
+  vendors Vendor[]
+
+  staffAttendances StaffAttendance[]
 
   onboarding SocietyOnboarding?
 
@@ -92,39 +117,69 @@ model Tower {
 }
 
 model User {
-  id               String  @id @default(uuid())
-  phone            String  @unique
-  name             String
-  email            String? @unique
-  password         String?
+  id String @id @default(uuid())
+
+  phone String @unique
+
+  name String
+
+  email String? @unique
+
+  password String?
+
   isOnboardingDone Boolean @default(false)
 
   role String
 
+  gender String?
+
+  dateOfBirth DateTime?
+
+  profileImageUrl String?
+
+  isActive Boolean @default(true)
+
+  isVerified Boolean @default(false)
+
+  joinedAt DateTime @default(now())
+
   societyId String
-  flatId    String?
-  towerId   String?
 
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
 
-  flat Flat? @relation(fields: [flatId], references: [id])
+  residentFlats ResidentFlat[]
 
-  bills               Bill[]
-  payments            Payment[]
-  complaints          Complaint[]
-  meetings            Meeting[]
-  votes               MeetingVote[]
+  bills Bill[]
+
+  payments Payment[]
+
+  complaints Complaint[]
+
+  meetings Meeting[]
+
+  votes MeetingVote[]
+
   visitorPreApprovals VisitorPreApproval[]
-  documentRequests    DocumentRequest[]
-  approvedDocuments   DocumentRequest[]    @relation("DocumentApprovedBy")
-  amenityBookings     AmenityBooking[]
-  parkingSlots        ParkingSlot[]
-  parkingViolations   ParkingViolation[]
-  recordedAttendances StaffAttendance[]    @relation("AttendanceRecordedBy")
 
+  documentRequests DocumentRequest[]
+
+  approvedDocuments DocumentRequest[] @relation("DocumentApprovedBy")
+
+  amenityBookings AmenityBooking[]
+
+  parkingSlots ParkingSlot[]
+
+  parkingViolations ParkingViolation[]
+
+  recordedAttendances StaffAttendance[] @relation("AttendanceRecordedBy")
+
+  @@index([societyId])
+  @@index([role])
+  @@index([isActive])
   @@map("users")
 }
 
@@ -132,7 +187,8 @@ model Flat {
   id String @id @default(uuid())
 
   societyId String
-  towerId   String
+
+  towerId String
 
   flatNumber String
 
@@ -147,13 +203,14 @@ model Flat {
   isActive Boolean @default(true)
 
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
 
   tower Tower @relation(fields: [towerId], references: [id], onDelete: Cascade)
 
-  users User[]
+  residentFlats ResidentFlat[]
 
   bills Bill[]
 
@@ -171,6 +228,47 @@ model Flat {
   @@index([societyId])
   @@index([towerId])
   @@map("flats")
+}
+
+model ResidentFlat {
+  id String @id @default(uuid())
+
+  userId String
+
+  flatId String
+
+  societyId String
+
+  relationType String
+  /**
+   * OWNER
+   * TENANT
+   * FAMILY_MEMBER
+   * ASSOCIATE
+   */
+
+  isPrimary Boolean @default(false)
+
+  moveInDate DateTime @default(now())
+
+  moveOutDate DateTime?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  flat Flat @relation(fields: [flatId], references: [id], onDelete: Cascade)
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([flatId])
+  @@index([societyId])
+  @@map("resident_flats")
 }
 
 model Complaint {
