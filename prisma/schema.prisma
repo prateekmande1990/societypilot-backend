@@ -38,6 +38,7 @@ model Society {
   staffAttendances  StaffAttendance[]
 
   onboarding SocietyOnboarding?
+  towers     Tower[]
 
   @@index([city])
   @@index([state])
@@ -65,6 +66,27 @@ model SocietyOnboarding {
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
 
   @@map("society_onboarding")
+}
+
+model Tower {
+  id String @id @default(uuid())
+
+  societyId String
+
+  name        String
+  totalFloors Int
+  totalFlats  Int
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  @@unique([societyId, name])
+  @@index([societyId])
+  @@map("towers")
 }
 
 model User {

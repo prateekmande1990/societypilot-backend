@@ -28,6 +28,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { TowersModule } from './modules/towers/towers.module';
 
 const useRedis = Boolean(process.env.REDIS_URL);
 
@@ -61,6 +62,7 @@ const useRedis = Boolean(process.env.REDIS_URL);
     StaffModule,
     AdminSettingsModule,
     PlatformAdminModule,
+    TowersModule,
   ],
   providers: [
     AppService,

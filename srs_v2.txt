@@ -1,0 +1,1776 @@
+SOCIETYPILOT
+Housing Society Management Platform
+Software Requirements Specification
+Version 2.0 | Comprehensive Edition
+Document Title SocietyPilot — Software Requirements
+Specification v2.0
+Version 2.0 (Comprehensive Update)
+Date May 2026
+Status Active — Approved
+Backend Framework NestJS (Node.js) + TypeScript
+Mobile App React Native (iOS & Android)
+WhatsApp Bot Meta Cloud API + Webhook Handlers
+Admin Panels Platform Admin (Super) + Per-Society Admin
+Primary Market India — Tier 1, 2 & 3 Cities
+Classification CONFIDENTIAL
+© 2026 SocietyPilot. All Rights Reserved. CONFIDENTIAL
+
+-- 1 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 2 of 49
+Revision History
+Version Date Author Description
+1.0 May 2026 SocietyPilot Core Team Initial SRS — All 10 modules, Web +
+WhatsApp
+2.0 May 2026 SocietyPilot Core Team NestJS backend, React Native app, Dual
+Admin Panels, WhatsApp Bot architecture
+
+-- 2 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 3 of 49
+Table of Contents
+Revision History ...................................................................................................................................... 2
+Table of Contents .................................................................................................................................... 3
+1. Introduction.......................................................................................................................................... 7
+1.1 Purpose ......................................................................................................................................... 7
+1.2 Project Overview ............................................................................................................................ 7
+1.3 Problem Statement......................................................................................................................... 7
+1.4 Scope ............................................................................................................................................ 8
+1.5 Definitions & Abbreviations ............................................................................................................. 8
+2. Stakeholders & User Roles ................................................................................................................ 10
+2.1 Stakeholder Map .......................................................................................................................... 10
+2.2 Role Hierarchy (16 Roles) ............................................................................................................ 10
+Platform Level ................................................................................................................................ 10
+Society Management Level (per society) ......................................................................................... 10
+Operations Staff Level .................................................................................................................... 10
+Resident Level................................................................................................................................ 11
+2.3 Role Permission Matrix................................................................................................................. 11
+3. System Architecture........................................................................................................................... 13
+3.1 High-Level Architecture ................................................................................................................ 13
+3.2 Multi-Tenant Design ..................................................................................................................... 13
+3.3 Technology Stack — v2.0............................................................................................................. 13
+3.4 NestJS Backend Architecture ....................................................................................................... 15
+3.4.1 Module Structure.................................................................................................................... 15
+3.4.2 Cross-Cutting Concerns ......................................................................................................... 15
+3.4.3 NestJS Decorator Strategy..................................................................................................... 15
+3.5 Database Design Overview .......................................................................................................... 16
+3.6 Project File Structure .................................................................................................................... 16
+4. NestJS Backend — Detailed Specifications ....................................................................................... 18
+4.1 Module Pattern............................................................................................................................. 18
+4.2 Authentication Module (NestJS) ................................................................................................... 18
+4.2.1 OTP Login Flow ..................................................................................................................... 18
+4.2.2 Passport Strategies................................................................................................................ 18
+4.2.3 JWT Token Structure ............................................................................................................. 18
+4.3 RBAC Implementation (NestJS Guards) ....................................................................................... 19
+4.4 Global Pipes, Interceptors & Filters............................................................................................... 19
+4.5 BullMQ Background Jobs ............................................................................................................. 19
+5. React Native Mobile Application......................................................................................................... 21
+5.1 Overview ...................................................................................................................................... 21
+5.2 App Architecture........................................................................................................................... 21
+
+-- 3 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 4 of 49
+5.3 Screen Inventory .......................................................................................................................... 21
+5.3.1 Auth Flow Screens ................................................................................................................. 21
+5.3.2 Resident Screens................................................................................................................... 22
+5.3.3 Committee Member Additional Screens.................................................................................. 22
+5.3.4 Security Guard Screens ......................................................................................................... 23
+5.4 Push Notification Strategy ............................................................................................................ 24
+5.5 Offline Capability .......................................................................................................................... 24
+5.6 Razorpay In-App Payment Flow ................................................................................................... 24
+6. WhatsApp Bot ................................................................................................................................... 26
+6.1 Overview ...................................................................................................................................... 26
+6.2 Bot Architecture............................................................................................................................ 26
+6.3 Supported Bot Flows .................................................................................................................... 26
+6.3.1 Payment Flow ........................................................................................................................ 26
+6.3.2 Complaint Flow ...................................................................................................................... 27
+6.3.3 Visitor Approval Flow ............................................................................................................. 27
+6.3.4 Balance & Statement Flow ..................................................................................................... 27
+6.3.5 Pre-Approval Flow ................................................................................................................. 28
+6.3.6 Emergency SOS Flow ............................................................................................................ 28
+6.3.7 Help / Menu Flow ................................................................................................................... 28
+6.4 Outbound Notification Templates .................................................................................................. 28
+6.5 Conversation Session Management ............................................................................................. 29
+6.6 Bot Opt-In & Opt-Out Management............................................................................................... 29
+7. Platform Admin Panel (SocietyPilot Super Admin).............................................................................. 30
+7.1 Overview ...................................................................................................................................... 30
+7.2 Authentication (Platform Admin) ................................................................................................... 30
+7.3 Dashboard (Platform Overview) .................................................................................................... 30
+7.4 Society Management.................................................................................................................... 30
+7.4.1 Society List ............................................................................................................................ 30
+7.4.2 Create New Society ............................................................................................................... 31
+7.4.3 Society Detail View ................................................................................................................ 31
+7.4.4 Impersonation Mode .............................................................................................................. 31
+7.5 Subscription & Billing Management .............................................................................................. 31
+7.6 Platform Configuration.................................................................................................................. 31
+7.6.1 Feature Flags......................................................................................................................... 31
+7.6.2 WhatsApp Template Management ......................................................................................... 32
+7.6.3 Global Announcements .......................................................................................................... 32
+7.7 Support Tools............................................................................................................................... 32
+7.8 Platform Admin API Endpoints...................................................................................................... 32
+8. Society Admin Panel (Per-Society Committee Dashboard) ................................................................. 34
+8.1 Overview ...................................................................................................................................... 34
+
+-- 4 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 5 of 49
+8.2 Navigation Structure ..................................................................................................................... 34
+8.3 Dashboard (Society Admin) .......................................................................................................... 34
+8.3.1 Chairman Dashboard Widgets ............................................................................................... 35
+8.3.2 Role-Specific Dashboards ...................................................................................................... 35
+8.4 Finance Module (Admin Panel)..................................................................................................... 35
+8.4.1 Bill Management .................................................................................................................... 35
+8.4.2 Defaulter Management........................................................................................................... 35
+8.4.3 Expense Management ........................................................................................................... 36
+8.4.4 Financial Reports ................................................................................................................... 36
+8.5 Complaint Management (Admin Panel) ........................................................................................ 36
+8.6 Meeting Management (Admin Panel) ............................................................................................ 36
+8.7 Society Settings (Admin Panel) .................................................................................................... 37
+8.7.1 Society Profile ........................................................................................................................ 37
+8.7.2 Flat & Tower Structure ........................................................................................................... 37
+8.7.3 Module Configuration ............................................................................................................. 37
+8.7.4 User & Role Management ...................................................................................................... 37
+8.7.5 Notification Preferences ......................................................................................................... 37
+9. Functional Requirements — Core Modules ........................................................................................ 38
+9.1 Module 1 — Resident & Flat Management.................................................................................... 38
+Society Structure ............................................................................................................................ 38
+9.2 Module 2 — Finance & Maintenance ............................................................................................ 38
+Key Requirements .......................................................................................................................... 38
+9.3 Module 3 — Complaint & Issue Management ............................................................................... 38
+Key Requirements .......................................................................................................................... 38
+9.4 Module 4 — Vendor & Staff Management ..................................................................................... 38
+Key Requirements .......................................................................................................................... 38
+9.5 Module 5 — Meeting & Communication ........................................................................................ 39
+Key Requirements .......................................................................................................................... 39
+9.6 Module 6 — Amenity Booking....................................................................................................... 39
+Key Requirements .......................................................................................................................... 39
+9.7 Module 7 — Parking Management................................................................................................ 39
+Key Requirements .......................................................................................................................... 39
+9.8 Module 8 — Document Management............................................................................................ 39
+Key Requirements .......................................................................................................................... 39
+9.9 Module 9 — Security & Visitor Management ................................................................................. 39
+Key Requirements .......................................................................................................................... 39
+9.10 Module 10 — Dashboards & Analytics ........................................................................................ 40
+Key Requirements .......................................................................................................................... 40
+10. Non-Functional Requirements.......................................................................................................... 41
+10.1 Performance .............................................................................................................................. 41
+
+-- 5 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 6 of 49
+10.2 Security ...................................................................................................................................... 41
+10.3 Scalability................................................................................................................................... 41
+10.4 Availability .................................................................................................................................. 42
+10.5 Compliance ................................................................................................................................ 42
+11. API Design Standards...................................................................................................................... 43
+11.1 REST Conventions ..................................................................................................................... 43
+11.2 Response Envelope ................................................................................................................... 43
+11.3 HTTP Status Codes ................................................................................................................... 43
+11.4 Key API Endpoints ..................................................................................................................... 43
+12. Integration Requirements ................................................................................................................. 45
+13. Business Rules ................................................................................................................................ 46
+13.1 Financial Rules........................................................................................................................... 46
+13.2 Complaint Rules ......................................................................................................................... 46
+13.3 Amenity Booking Rules .............................................................................................................. 46
+13.4 Security Rules ............................................................................................................................ 46
+13.5 Platform Rules (SUPER_ADMIN) ............................................................................................... 46
+14. Build Roadmap ................................................................................................................................ 48
+15. Appendix ......................................................................................................................................... 49
+15.1 Pricing Model ............................................................................................................................. 49
+15.2 Document Sign-Off ..................................................................................................................... 49
+
+-- 6 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 7 of 49
+1. Introduction
+1.1 Purpose
+This Software Requirements Specification (SRS) defines the complete functional and non-functional
+requirements for SocietyPilot v2.0 — a comprehensive, multi-tenant, cloud-based housing society
+management platform built for the Indian market. Version 2.0 significantly expands the original SRS to
+include: NestJS as the backend framework, a full React Native mobile application (iOS + Android), a
+WhatsApp Bot with conversational flows, a Platform-Level Super Admin Panel (for SocietyPilot owners),
+and a Per-Society Admin Panel (for society committees).
+1.2 Project Overview
+SocietyPilot is a SaaS platform designed to digitise and automate every operational aspect of housing
+societies — from maintenance billing and complaint management to vendor directories, amenity
+bookings, meeting coordination, security access, and financial reporting. The platform is engineered to
+scale from small 30-flat societies to large township societies with 1,500+ flats, multiple towers,
+clubhouses, swimming pools, and complex multi-basement parking systems.
+ℹ SocietyPilot targets the gap between expensive enterprise tools (ApnaComplex at ₹15,000+/year) and basic
+notice apps. It is the first Indian platform architected for large-scale multi-tower societies at an affordable price
+point, now with full mobile-first React Native experience and AI-powered WhatsApp Bot.
+1.3 Problem Statement
+Housing societies across India suffer from chronic, unresolved operational problems:
+Pain Area Current Broken State Business Impact
+Maintenance Billing Manual Excel/paper ledger; secretary
+chases 500 people via WhatsApp 10+ hrs/month wasted; high error rate
+Complaint Tracking Complaints buried in WhatsApp group chat Zero accountability; repeat issues
+unresolved
+Vendor Management All contact numbers stored in secretary's
+personal phone Completely lost when secretary changes
+Document Requests Resident visits chairman personally for
+NOC letters Delays loan processing; inconvenient
+Meeting Coordination Paper notices on board; last-minute
+WhatsApp forwards Poor quorum; decisions untracked
+Parking Disputes No formal record of slot allocation exists #1 source of neighbour conflicts
+Financial Transparency Residents have no access to society
+income/expense Trust deficit; fraud suspicion
+Security & Access Paper logbook at gate; no digital visitor
+history Safety risk; no accountability trail
+Staff Management Attendance in manual register; salary paid
+in cash No verification; disputes frequent
+
+-- 7 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 8 of 49
+Pain Area Current Broken State Business Impact
+AMC Tracking Service contract expiry tracked in
+secretary's memory Lift/generator AMC lapses unnoticed
+Mobile Accessibility No native app; web-only access not
+mobile-friendly
+Low adoption; WhatsApp-dependency
+continues
+1.4 Scope
+SocietyPilot v2.0 covers the following functional modules and platform components:
+Core Modules:
+• Module 1 — Resident & Flat Management
+• Module 2 — Finance, Maintenance Billing & Accounting
+• Module 3 — Complaint & Issue Ticketing
+• Module 4 — Vendor & Staff Management
+• Module 5 — Meeting, Notice & Communication
+• Module 6 — Amenity Booking & Facility Management
+• Module 7 — Parking Management
+• Module 8 — Document Generation & Management
+• Module 9 — Security & Visitor Management
+• Module 10 — Dashboards & Analytics
+Platform Components (v2.0 New):
+• NestJS Backend with TypeScript, Modular Architecture, and Decorators-based RBAC
+• React Native Mobile App (iOS + Android) — Full-featured resident & committee app
+• WhatsApp Bot — Conversational AI bot for payments, complaints, visitor approval, and queries
+• Platform Admin Panel — SocietyPilot owner dashboard (SUPER_ADMIN) for managing all societies
+• Society Admin Panel — Per-society committee dashboard with full operational management
+1.5 Definitions & Abbreviations
+Term Definition
+SRS Software Requirements Specification — this document
+RBAC Role-Based Access Control — permission system based on assigned roles
+JWT JSON Web Token — used for stateless API authentication
+OTP One-Time Password — 6-digit code sent via SMS for mobile login
+UPI Unified Payments Interface — India's real-time payment system
+AutoPay Razorpay recurring UPI mandate for automatic monthly maintenance deduction
+AGM Annual General Meeting — mandatory yearly society meeting
+SGM Special General Meeting — called for urgent or special decisions
+AMC Annual Maintenance Contract — vendor service agreement with expiry date
+
+-- 8 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 9 of 49
+Term Definition
+NOC No Objection Certificate — issued by society to residents for bank loans
+BullMQ Node.js job queue library built on Redis — used for async background tasks
+Multi-tenant Single platform instance serving multiple fully isolated societies
+Tower Captain Committee member responsible for managing a specific tower or wing
+Sinking Fund Reserve fund for major capital expenditure (lifts, water tanks, roads)
+Corpus Fund One-time deposit collected from residents at move-in for society corpus
+DPDP Act Digital Personal Data Protection Act 2023 — India's data privacy law
+RLS Row-Level Security — PostgreSQL feature to isolate data per society
+FCM Firebase Cloud Messaging — used for mobile push notifications
+NestJS Progressive Node.js framework using TypeScript and decorator-based architecture
+DTO Data Transfer Object — NestJS typed request/response payload class
+Guard NestJS built-in mechanism for authentication/authorization checks
+Interceptor NestJS middleware for request/response transformation and logging
+Pipe NestJS validation pipeline — validates and transforms DTOs using class-validator
+React Native Cross-platform mobile framework by Meta — single codebase for iOS & Android
+Expo React Native toolchain for streamlined builds and OTA updates
+Deep Link Mobile URL scheme (societypilot://) that opens specific screens directly
+Push Notification FCM-powered background notification to mobile devices
+WhatsApp Bot Automated conversational agent on WhatsApp via Meta Cloud API
+Webhook HTTP callback from Razorpay/WhatsApp to SocietyPilot backend on events
+
+-- 9 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 10 of 49
+2. Stakeholders & User Roles
+2.1 Stakeholder Map
+Stakeholder Type Primary Interest
+SocietyPilot Team Internal Build, maintain, scale, and monetise the platform
+Society Chairman Primary Full visibility and control; reduce management burden
+Secretary Primary Day-to-day operations; replace WhatsApp chaos with structure
+Treasurer Primary Accurate financial records; audit-ready reports
+Joint Secretary Primary Support secretary; manage specific operational areas
+Committee Members Primary Module-specific management with limited scope
+Tower Captain Primary Manage complaints and communication for their tower
+Residents / Owners Primary Pay maintenance easily; raise complaints; book amenities
+Tenants Primary Same as residents but with limited permissions
+Security Guards Primary Log visitors digitally; receive gate instructions
+Accountant Primary Enter expenses; generate financial reports for treasurer
+Facility Manager Primary Manage vendors, AMCs, and amenity operations
+Vendors Secondary Referenced in society vendor directory
+Banks / Auditors Secondary Receive exported financial statements and audit reports
+NPCI / RBI Regulatory UPI payment compliance; data localisation requirements
+DPDP Authority Regulatory Personal data protection compliance in India
+2.2 Role Hierarchy (16 Roles)
+Platform Level
+• SUPER_ADMIN — Platform owner (SocietyPilot team). Creates societies, manages billing, views all
+data across all societies, manages platform health.
+Society Management Level (per society)
+• CHAIRMAN — Supreme authority. Full access to every module within their society.
+• SECRETARY — Operations head. Manages residents, complaints, vendors, meetings, documents.
+• TREASURER — Finance head. Full financial access; no access to non-finance modules.
+• JOINT_SECRETARY — Operations support. Same as Secretary except cannot delete records.
+• COMMITTEE_MEMBER — General committee. Read access to most modules; limited write access.
+• TOWER_CAPTAIN — Tower-scoped admin. Full access restricted to their assigned tower only.
+Operations Staff Level
+• ACCOUNTANT — Finance data entry, receipt generation, report export. Cannot approve expenses.
+• FACILITY_MANAGER — Amenity management, vendor directory, AMC contracts. No financial
+access.
+• SECURITY_SUPERVISOR — Guard roster management, visitor log review, shift scheduling.
+
+-- 10 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 11 of 49
+• SECURITY_GUARD — Gate entry only. Logs visitors, processes deliveries, updates entry status.
+• MAINTENANCE_STAFF — Updates complaint status only. Cannot create or close complaints.
+Resident Level
+• OWNER_RESIDENT — Flat owner living on-site. Full resident permissions including voting.
+• OWNER_NONRESIDENT — Absentee owner (flat rented out). Can approve tenant move-in, view
+financials.
+• TENANT — Renting the flat. Resident features except financial approvals and resolution voting.
+• FAMILY_MEMBER — Added by resident as household member. View-only access to notices and
+contacts.
+2.3 Role Permission Matrix
+ℹ ✓ = Full access – = No access. Tower Captain access is scoped to their tower only.
+Feature / Action Chair Secy Treas Comm Twr
+Cap Resident Guard
+RESIDENT MANAGEMENT
+Add / Edit Resident ✓ ✓ – – – – –
+View All Residents ✓ ✓ ✓ ✓ ✓ – –
+View Own Profile ✓ ✓ ✓ ✓ ✓ ✓ ✓
+Approve Tenant Move-In ✓ ✓ – – ✓ ✓ –
+Delete Resident ✓ ✓ – – – – –
+FINANCE
+Set Maintenance Amounts ✓ – ✓ – – – –
+Pay Maintenance (Online) ✓ ✓ ✓ ✓ ✓ ✓ –
+View All Payments ✓ ✓ ✓ – – – –
+Add Expense ✓ ✓ ✓ – – – –
+Approve Expense < ₹5K ✓ ✓ ✓ – – – –
+Approve Expense > ₹50K ✓ – – – – – –
+Export Financial Reports ✓ ✓ ✓ – – – –
+COMPLAINTS
+Raise Complaint ✓ ✓ ✓ ✓ ✓ ✓ –
+View All Complaints ✓ ✓ – ✓ ✓ – –
+Assign / Update Complaint ✓ ✓ – ✓ ✓ – –
+Escalate Complaint ✓ ✓ – – – ✓ –
+VENDORS & STAFF
+View Vendor Directory ✓ ✓ ✓ ✓ ✓ ✓ –
+Add / Edit Vendor ✓ ✓ – – – – –
+Staff Attendance ✓ ✓ – – – – –
+
+-- 11 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 12 of 49
+Feature / Action Chair Secy Treas Comm Twr
+Cap Resident Guard
+MEETINGS
+Schedule Meeting ✓ ✓ – – ✓ – –
+Send Notice / Announcement ✓ ✓ – – ✓ – –
+Vote on Resolution ✓ ✓ ✓ ✓ ✓ ✓ –
+AMENITIES & PARKING
+Book Amenity ✓ ✓ ✓ ✓ ✓ ✓ –
+Approve Booking ✓ ✓ – – – – –
+Assign Permanent Parking Slot ✓ ✓ – – – – –
+Report Parking Violation ✓ ✓ ✓ ✓ ✓ ✓ ✓
+SECURITY
+Log Visitor Entry ✓ ✓ – – – – ✓
+Pre-Approve Visitor ✓ ✓ ✓ ✓ ✓ ✓ –
+Blacklist Visitor ✓ ✓ – – – – –
+SOS Emergency Alert ✓ ✓ ✓ ✓ ✓ ✓ ✓
+SETTINGS
+Society Settings ✓ – – – – – –
+Manage Roles & Assign ✓ ✓ – – – – –
+View Audit Logs ✓ ✓ – – – – –
+
+-- 12 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 13 of 49
+3. System Architecture
+3.1 High-Level Architecture
+SocietyPilot v2.0 follows a Modular Monolith architecture on the backend built with NestJS — a single
+deployable TypeScript/Node.js application structured into independent, clearly-bounded NestJS modules.
+This approach allows a small team to move fast while keeping the codebase organised for future
+extraction into microservices if needed.
+Request Flow (Web & Mobile):
+• Client (React Web / React Native App) → HTTPS → Cloudflare CDN → Railway.app Backend
+(NestJS)
+• Backend → PostgreSQL (primary data) + Redis (sessions, cache, queues)
+• Background workers (BullMQ) → WhatsApp API / SendGrid / MSG91 / Razorpay / Cloudflare R2
+Request Flow (WhatsApp Bot):
+• User sends WhatsApp message → Meta Cloud API → Webhook → NestJS WhatsApp Bot Module
+• Bot Module → parses intent → calls internal service layer → responds via WhatsApp reply
+• Complex bot flows (payment, multi-step) → session state stored in Redis
+ℹ Architecture Decision: NestJS replaces Express.js in v2.0 for its TypeScript-first design, built-in dependency
+injection, Guards for RBAC, Interceptors for logging, Pipes for validation, and its module system that mirrors the
+platform's domain boundaries perfectly.
+3.2 Multi-Tenant Design
+Every society operates as a fully isolated tenant on a single database. The multi-tenancy strategy uses
+shared tables with society_id as a mandatory column on every table, combined with PostgreSQL Row-
+Level Security (RLS) and NestJS middleware enforcement.
+Isolation Rules:
+• Every database query is automatically scoped to the authenticated user's society_id via Prisma
+middleware
+• NestJS custom @SocietyGuard() injects society_id from the JWT token into every request context
+• A user from Society A can never read, write, or query data belonging to Society B
+• SUPER_ADMIN is the only role that can query across societies using the Platform Admin Panel
+3.3 Technology Stack — v2.0
+Layer Technology Justification
+Backend Runtime NestJS + TypeScript Type-safe; decorator-based architecture; built-in DI,
+Guards, Pipes, Interceptors
+ORM Prisma Type-safe queries; auto-migrations; native NestJS
+integration via PrismaService
+Primary Database PostgreSQL 15 ACID compliance; RLS; JSON support; production-
+proven
+
+-- 13 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 14 of 49
+Layer Technology Justification
+Cache / Sessions Redis 7 OTP storage, session management, rate limiting,
+bot session state
+Job Queue BullMQ + Redis Async bulk operations — 1500 WhatsApp msgs;
+uses NestJS @InjectQueue()
+Validation class-validator + class-
+transformer NestJS ValidationPipe auto-validates all DTOs
+Web Frontend React 18 + Vite Fast builds; component ecosystem; Society Admin
+Panel
+Mobile App React Native + Expo Single codebase for iOS & Android; OTA updates
+Mobile Navigation React Navigation v6 Stack, Tab, Drawer navigators; deep linking
+Mobile State Zustand + React Query Server state (React Query) + UI state (Zustand)
+Mobile UI React Native Paper + Tailwind
+RN
+Material Design components; Tailwind for custom
+styling
+Mobile Offline React Query + MMKV Offline cache with fast key-value persistence
+Push Notifications Firebase FCM + Expo
+Notifications Cross-platform push; foreground + background
+WhatsApp Bot Meta Cloud API + NestJS
+Module
+Webhook-driven bot with conversational state
+machine
+Admin UI (Platform) React 18 + Ant Design Pro SUPER_ADMIN dashboard; data tables; charts
+Admin UI (Society) React 18 + Shadcn/UI +
+Tailwind Per-society committee panel
+PDF Generation PDFKit (Node.js) via NestJS
+service Server-side receipt and NOC PDF generation
+Authentication JWT + Passport.js (NestJS) @nestjs/passport with JwtStrategy; Guards
+OTP / SMS MSG91 Best Indian SMS provider; low cost; delivery
+guarantee
+Email SendGrid Transactional + bulk via NestJS mailer module
+Payments Razorpay UPI AutoPay; webhooks; NestJS webhook
+verification middleware
+File Storage Cloudflare R2 S3-compatible; zero egress cost; global CDN
+Backend Hosting Railway.app Simple deployment; PostgreSQL + Redis add-ons
+Web Hosting Vercel Global CDN; GitHub auto-deploy; monorepo
+support
+Mobile Distribution App Store + Google Play +
+Expo EAS Production builds via Expo EAS Build
+Error Tracking Sentry NestJS Sentry interceptor; source maps; real-time
+alerts
+Monitoring Better Stack Uptime + log management
+Analytics PostHog Product analytics; feature flags; mobile SDK
+
+-- 14 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 15 of 49
+3.4 NestJS Backend Architecture
+3.4.1 Module Structure
+Each domain area is a self-contained NestJS module following the standard pattern: Module → Controller
+→ Service → Repository (via Prisma). Modules are grouped into three layers:
+Layer NestJS Modules Responsibility
+Infrastructure AuthModule, PrismaModule, RedisModule,
+BullModule, StorageModule Cross-cutting platform concerns
+Core Domain
+ResidentsModule, FinanceModule,
+ComplaintsModule, VendorsModule,
+MeetingsModule, AmenitiesModule,
+ParkingModule, DocumentsModule,
+SecurityModule, DashboardModule
+Business logic modules
+Integration WhatsAppModule, NotificationModule,
+PaymentModule, EmailModule External service integrations
+Admin PlatformAdminModule,
+SocietyAdminModule Admin-specific controllers and services
+3.4.2 Cross-Cutting Concerns
+• @UseGuards(JwtAuthGuard, RolesGuard) — applied globally; roles checked via @Roles() decorator
+• SocietyContextInterceptor — injects society_id into every request from JWT; applied globally
+• AuditInterceptor — logs every write operation (POST/PATCH/DELETE) to audit_logs table
+• ValidationPipe — global pipe; transforms and validates all DTOs via class-validator
+• HttpExceptionFilter — global exception filter; standardises error responses
+• ThrottlerGuard — rate limiting per IP via @nestjs/throttler; Redis-backed
+3.4.3 NestJS Decorator Strategy
+Decorator / Guard Purpose Applied At
+@JwtAuthGuard() Verifies JWT token validity Global (all protected routes)
+@Roles('CHAIRMAN','SECRETARY') Declares required roles Route handler level
+@RolesGuard() Checks JWT roles against
+@Roles() Global guard after JWT
+@SocietyScope() Ensures query is scoped to
+JWT's society_id Service layer via Prisma middleware
+@TowerScope() Restricts Tower Captain to their
+tower_id Service layer conditionally
+@Permission('finance:read') Granular permission check Route handler level for fine-grained
+control
+@ApiKey() Validates X-API-Key header for
+webhook endpoints Webhook controllers
+@Public() Marks route as unauthenticated
+(login, health check) Public routes only
+
+-- 15 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 16 of 49
+3.5 Database Design Overview
+The database is organised into 7 logical groups. Every table includes: id (UUID), society_id (UUID),
+created_at, updated_at, and deleted_at (soft delete). All foreign keys include cascaded society_id for
+multi-tenant safety.
+Group Tables
+Core societies, phases, towers, floors, flats, users, user_roles, audit_logs, society_settings
+Finance maintenance_configs, maintenance_bills, payments, expenses, expense_approvals, funds,
+receipts, refunds
+Operations complaints, complaint_updates, vendors, amc_contracts, staff, staff_attendance,
+staff_salary, maintenance_schedules
+Amenities amenities, amenity_slots, amenity_bookings, booking_payments, amenity_blackout_dates
+Communication notices, notice_reads, meetings, meeting_rsvp, meeting_votes, polls, poll_responses,
+push_notification_logs
+Documents document_requests, society_documents, document_templates, issued_documents
+Security visitors, pre_approvals, gate_passes, blacklist, parking_zones, parking_slots,
+slot_allocations, visitor_parking, sos_alerts
+Platform platform_subscriptions, billing_invoices, platform_announcements, feature_flags,
+society_onboarding
+WhatsApp Bot bot_sessions, bot_conversation_logs, bot_template_usage, bot_opt_ins
+3.6 Project File Structure
+societypilot/
+• backend/ — NestJS TypeScript backend
+◦ src/
+◦ modules/ — One NestJS module per domain
+◦ auth/ — AuthModule: OTP, JWT, Passport strategy
+◦ residents/ — ResidentsModule: flat, user, move-in/out
+◦ finance/ — FinanceModule: bills, payments, expenses
+◦ complaints/ — ComplaintsModule: tickets, escalations
+◦ vendors/ — VendorsModule: directory, AMC, staff
+◦ meetings/ — MeetingsModule: AGM, notices, polls
+◦ amenities/ — AmenitiesModule: booking, calendar
+◦ parking/ — ParkingModule: slots, violations
+◦ documents/ — DocumentsModule: NOC, templates
+◦ security/ — SecurityModule: visitors, SOS
+◦ dashboard/ — DashboardModule: analytics aggregation
+◦ whatsapp/ — WhatsAppModule: bot, templates, webhooks
+◦ platform-admin/ — PlatformAdminModule: SUPER_ADMIN APIs
+◦ society-admin/ — SocietyAdminModule: committee APIs
+◦ common/ — Shared decorators, guards, interceptors, filters
+◦ prisma/ — PrismaService (NestJS injectable)
+◦ config/ — NestJS ConfigModule with validation
+
+-- 16 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 17 of 49
+◦ workers/ — BullMQ processors for async tasks
+◦ prisma/schema.prisma — Full Prisma schema
+• mobile/ — React Native (Expo) mobile app
+◦ src/
+◦ screens/ — One folder per module (HomeScreen, BillsScreen ...)
+◦ components/ — Reusable RN components
+◦ navigation/ — Stack, Tab, Drawer navigators + deep links
+◦ store/ — Zustand slices (auth, society, notifications)
+◦ api/ — React Query hooks for all API calls
+◦ utils/ — fcm.ts, razorpay.ts, storage.ts (MMKV)
+◦ app.json — Expo config (bundle IDs, icons, scheme)
+• platform-admin/ — SUPER_ADMIN React web panel (Ant Design Pro)
+• society-admin/ — Society committee React web panel (Shadcn/UI)
+
+-- 17 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 18 of 49
+4. NestJS Backend — Detailed Specifications
+4.1 Module Pattern
+Every NestJS domain module follows this exact pattern for consistency:
+File Content Example
+[module].module.ts NestJS @Module() decorator; imports,
+providers, exports finance.module.ts
+[module].controller.ts Route handlers; @Get/@Post etc;
+@UseGuards; @Roles; @Body DTO finance.controller.ts
+[module].service.ts Business logic; calls PrismaService;
+throws HttpException finance.service.ts
+dto/create-[entity].dto.ts class-validator decorated DTO class for
+POST requests create-bill.dto.ts
+dto/update-[entity].dto.ts PartialType(Create...) for PATCH
+requests update-bill.dto.ts
+entities/[entity].entity.ts TypeScript interface matching Prisma
+model bill.entity.ts
+[module].constants.ts Enums, constants used within module finance.constants.ts
+4.2 Authentication Module (NestJS)
+4.2.1 OTP Login Flow
+• POST /auth/otp/send — validates phone number exists; calls MSG91; stores OTP in Redis (5-min
+TTL)
+• POST /auth/otp/verify — validates OTP from Redis; issues AccessToken (15-min JWT) +
+RefreshToken (7-day, Redis)
+• POST /auth/refresh — Passport RefreshTokenStrategy validates Redis token; issues new pair
+• POST /auth/logout — invalidates RefreshToken in Redis; all active sessions terminated
+4.2.2 Passport Strategies
+Strategy Class Description
+jwt JwtStrategy extends
+PassportStrategy(Strategy)
+Validates Bearer token; injects user payload
+into request
+refresh-jwt RefreshJwtStrategy extends
+PassportStrategy(Strategy,'refresh-jwt') Validates refresh token; rotates on use
+api-key ApiKeyStrategy Validates X-Razorpay-Signature and X-Hub-
+Signature webhook headers
+4.2.3 JWT Token Structure
+
+-- 18 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 19 of 49
+Field Type Description
+userId UUID Unique user identifier
+societyId UUID Active society for this session
+role String enum Primary role: CHAIRMAN, SECRETARY, TENANT, etc.
+flatId UUID User's flat — null for staff roles
+towerId UUID Tower scope for TOWER_CAPTAIN — null for others
+permissions String[] Pre-computed permission array e.g. ['complaints:write']
+iat Unix
+timestamp Token issued-at time
+exp Unix
+timestamp Token expiry (iat + 15 minutes for access token)
+4.3 RBAC Implementation (NestJS Guards)
+NestJS implements RBAC through a chain of Guards that execute in order on every protected request:
+• JwtAuthGuard — extends AuthGuard('jwt'); validates token; populates req.user with JWT payload
+• RolesGuard — reads @Roles() metadata via Reflector; checks req.user.role against allowed roles
+• PermissionsGuard — reads @Permission() metadata; checks req.user.permissions[] array
+• SocietyContextGuard — validates societyId in JWT matches resource's society_id; prevents cross-
+tenant access
+• TowerScopeGuard — if role is TOWER_CAPTAIN, validates resource belongs to user's tower_id
+4.4 Global Pipes, Interceptors & Filters
+Component Type Purpose
+ValidationPipe Pipe (Global) Validates all DTOs; strips unknown fields; transforms
+types
+TransformInterceptor Interceptor (Global) Wraps all responses in {success: true, data: ...}
+envelope
+AuditInterceptor Interceptor (Global) Logs all write operations to audit_logs after response
+LoggingInterceptor Interceptor (Global) Logs request method, URL, duration, status code
+SocietyContextInterceptor Interceptor (Global) Extracts societyId from JWT; makes available via
+REQUEST scope
+HttpExceptionFilter Filter (Global) Formats all errors as {success: false, error: {code,
+message}}
+ThrottlerGuard Guard (Global) Rate limiting: 100/min public, 1000/min authenticated
+4.5 BullMQ Background Jobs
+
+-- 19 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 20 of 49
+Queue Job Trigger Worker Processing
+bill-generation generate-bills Monthly schedule /
+manual trigger
+Generate bills for all flats; 1500 docs
+async
+notifications send-whatsapp Any event triggering
+notification Rate-limited Meta Cloud API calls
+notifications send-sms OTP / payment
+reminder MSG91 API calls in batches
+notifications send-email Receipt, NOC, minutes
+delivery SendGrid transactional email
+notifications send-push App notification for
+residents Firebase FCM batch send
+payments process-webhook Razorpay webhook
+received
+Idempotent payment processing +
+receipt generation
+documents generate-pdf Receipt or NOC
+approval
+PDFKit rendering; R2 upload; notify
+resident
+reminders payment-reminder Scheduled D-7, D-3,
+D+7, D+15, D+30
+Defaulter reminder via WhatsApp +
+SMS
+escalations escalation-check Scheduled every hour Check complaint SLAs; fire escalation
+if breached
+amc-alerts amc-expiry-check Scheduled daily 9am Check AMC expiry dates; send alerts
+
+-- 20 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 21 of 49
+5. React Native Mobile Application
+5.1 Overview
+The SocietyPilot mobile app is a React Native application built with Expo, targeting iOS (14+) and Android
+(API 26+). It is the primary interface for residents and the secondary interface for committee members
+(who use both the mobile app and the Society Admin Panel).
+ℹ The mobile app is designed mobile-first with offline capability. Residents in societies with poor connectivity
+(basement, remote floors) can view their latest bills, raise complaints, and check visitor pre-approvals even when
+offline, with sync when connection is restored.
+5.2 App Architecture
+Layer Technology Purpose
+Navigation React Navigation v6 (Native Stack +
+Bottom Tab + Drawer) Screen routing, deep linking, auth flow
+API Layer React Query (TanStack Query v5) Server state management, caching, background
+sync
+UI State Zustand Auth state, society selection, notification count,
+theme
+API Client Axios with NestJS interceptors JWT refresh interceptor; error handling; base URL
+Offline Cache React Query persistence + MMKV Fast encrypted local storage for offline access
+Push Notifications Expo Notifications + FCM Background/foreground; deep link on tap
+Payments Razorpay React Native SDK In-app UPI / card payment without browser redirect
+File Handling expo-document-picker + expo-file-
+system Complaint photo upload, document download
+Camera expo-camera + expo-image-picker Profile photo, complaint evidence photos
+Biometrics expo-local-authentication Optional fingerprint/Face ID for app unlock
+OTA Updates Expo EAS Update Push JS bundle updates without app store review
+Analytics PostHog React Native SDK Screen views, button taps, conversion events
+5.3 Screen Inventory
+5.3.1 Auth Flow Screens
+Screen Description Key Actions
+SplashScreen App loading; checks stored JWT validity Auto-navigate to Home or Login
+LoginScreen Phone number input; OTP request 10-digit phone; send OTP button
+OTPVerifyScreen 6-digit OTP entry with countdown Auto-verify on 6-digit entry; resend after
+60s
+
+-- 21 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 22 of 49
+Screen Description Key Actions
+SocietySelectScreen Shown if user belongs to multiple
+societies Tap to select active society
+OnboardingScreen First-time user walkthrough (3 slides) Skip or complete onboarding
+5.3.2 Resident Screens
+Screen Description Key Actions
+HomeScreen Dashboard: bill status, notices,
+complaints, bookings Quick action cards; notification bell
+BillsScreen All bills with status
+(Paid/Pending/Overdue) Filter by period; tap to pay
+BillDetailScreen Line-item breakdown of single bill Pay Now (Razorpay); Download Receipt
+PaymentSuccessScreen Post-payment confirmation with
+receipt Download PDF; Share via WhatsApp
+PaymentHistoryScreen All past payments with receipts Date filter; PDF download
+ComplaintsScreen My complaints with status badges Filter by status; FAB to raise new
+NewComplaintScreen Complaint creation form Category, description, photo attach (4 max)
+ComplaintDetailScreen Full complaint thread with updates Track progress; escalate option
+NoticesScreen Society announcements and notices Unread badges; mark as read; pinned at
+top
+NoticeDetailScreen Full notice content Read receipt auto-triggered on open
+AmenitiesScreen Available amenities with availability
+indicator Browse; tap to book
+AmenityBookingScreen Calendar slot picker + booking form Conflict-free slot selection; pay deposit
+MyBookingsScreen Upcoming and past amenity
+bookings QR pass; cancel (if 24h+ away)
+VisitorScreen Pre-approvals and visitor history Add pre-approval; view visitor log
+AddPreApprovalScreen Create pre-approval for maid, cook,
+delivery Name, photo, days, valid-until
+ParkingScreen My parking slot(s) and visitor parking View allocation; book visitor spot; report
+violation
+DocumentsScreen Request NOC, clearance certificate,
+etc. Select document type; track request status
+ProfileScreen My flat details, vehicles, family
+members Edit profile; add family member
+SettingsScreen App settings, notifications,
+biometrics, logout Theme toggle; notification preferences
+5.3.3 Committee Member Additional Screens
+
+-- 22 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 23 of 49
+Screen Description Roles
+CommitteeHomeScreen Expanded dashboard with
+pending actions count Chairman, Secretary, Treasurer
+ResidentsListScreen Full resident directory with
+search/filter Chairman, Secretary
+ResidentDetailScreen Flat profile: resident, tenant,
+vehicles, history Chairman, Secretary
+AddResidentScreen Onboard new resident with
+invitation send Chairman, Secretary
+MoveOutScreen Initiate move-out with dues check Chairman, Secretary
+AllComplaintsScreen Society-wide complaint list with
+assignment Chairman, Secretary, Committee
+ComplaintAssignScreen Assign complaint to staff / vendor Chairman, Secretary
+FinanceSummaryScreen Monthly P&L, fund balances,
+collection rate Chairman, Treasurer
+DefaultersScreen Defaulter list with aging and
+contact actions Chairman, Secretary, Treasurer
+ExpensesScreen Expense ledger with approval
+workflow Chairman, Treasurer
+MeetingsScreen Upcoming and past meetings Chairman, Secretary
+CreateMeetingScreen Schedule meeting with agenda Chairman, Secretary
+MeetingDetailScreen Agenda, RSVP list, minutes,
+resolution votes All committee
+VendorsScreen Vendor directory with ratings All committee
+AddVendorScreen Add vendor with documents Chairman, Secretary
+AMCScreen AMC contracts with expiry colour
+coding Chairman, Secretary, Facility Manager
+SecurityDashScreen Live visitor log, guard roster Chairman, Secretary, Security Supervisor
+VisitorLogScreen Full gate visitor history Chairman, Secretary, Security
+Supervisor, Guard
+5.3.4 Security Guard Screens
+Screen Description Key Actions
+GuardHomeScreen Simple gate interface: log visitor,
+view pre-approvals Large action buttons for easy use
+LogVisitorScreen Quick visitor entry form Name, purpose, flat number, vehicle; photo
+optional
+PreApprovalsScreen List of active pre-approvals for quick
+reference Search by name; green pass indicator
+BlacklistCheckScreen Check if visitor is blacklisted Real-time check; auto-alert to supervisor
+DeliveryLogScreen Log delivery agents separately Company, package; notify resident
+
+-- 23 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 24 of 49
+Screen Description Key Actions
+VisitorExitScreen Mark exit time for logged visitors Scan QR or manual flat+name lookup
+5.4 Push Notification Strategy
+Event Channel Target Deep Link
+New maintenance bill Push +
+WhatsApp Flat owner/tenant societypilot://bills/{billId}
+Payment successful Push +
+WhatsApp Payer societypilot://payment/{paymentId}/receipt
+Complaint status updated Push +
+WhatsApp Complainant societypilot://complaints/{complaintId}
+Visitor at gate (approval
+request)
+Push (high
+priority) +
+WhatsApp
+Flat residents societypilot://visitor/approve/{visitorId}
+New notice Push All targeted residents societypilot://notices/{noticeId}
+Meeting reminder Push +
+WhatsApp All eligible members societypilot://meetings/{meetingId}
+Amenity booking
+confirmed Push Booking resident societypilot://bookings/{bookingId}
+Complaint escalated to
+you
+Push +
+WhatsApp Chairman/Secretary societypilot://complaints/{complaintId}
+AMC expiry alert Push +
+WhatsApp Chairman, Secretary societypilot://amc/{contractId}
+SOS alert
+Push
+(critical) +
+SMS
+All committee members societypilot://sos/{alertId}
+Payment overdue
+reminder
+Push +
+WhatsApp Defaulter flat societypilot://bills/{billId}
+5.5 Offline Capability
+• React Query persists API responses to MMKV encrypted local storage
+• Screens show stale data with a 'Last synced X minutes ago' indicator when offline
+• Write operations (raise complaint, record payment intent) queued locally and synced on reconnect
+• Critical screens cached: Bills, Complaints, Notices, Visitor Pre-approvals, Emergency Contacts
+• Network status monitored via @react-native-community/netinfo; auto-sync on reconnect
+5.6 Razorpay In-App Payment Flow
+• Resident taps Pay Now on BillDetailScreen
+• App calls POST /finance/payments/create-order — backend creates Razorpay order, returns order_id
+• App opens Razorpay React Native SDK with order_id — resident selects UPI/card/netbanking
+• Razorpay SDK returns payment_id on success — app sends to POST /finance/payments/verify
+
+-- 24 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 25 of 49
+• Backend verifies Razorpay signature; marks payment; triggers receipt generation job
+• App receives success response; navigates to PaymentSuccessScreen with receipt download
+• Razorpay webhook (separate) fires concurrently — idempotent handler ensures no double-processing
+
+-- 25 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 26 of 49
+6. WhatsApp Bot
+6.1 Overview
+The SocietyPilot WhatsApp Bot operates on the society's dedicated WhatsApp Business number via the
+Meta Cloud API. It serves as a conversational interface that reduces app install friction — residents who
+never install the app can still pay bills, raise complaints, check balances, approve visitors, and receive
+receipts entirely through WhatsApp.
+ℹ WhatsApp Bot is the primary interaction channel for non-smartphone-savvy residents (elderly, domestic staff,
+guards). The bot handles both incoming messages (conversational) and outgoing notifications (templated). It
+coexists with the mobile app — the same data layer powers both.
+6.2 Bot Architecture
+The WhatsApp Bot is implemented as a dedicated NestJS WhatsAppModule with the following
+components:
+Component Class Responsibility
+WhatsAppController @Controller('webhook/whatsapp') Receives Meta Cloud API webhook
+events; verifies HMAC signature
+WhatsAppBotService @Injectable() Routes incoming messages to appropriate
+intent handler
+IntentRouter Class with @MessageIntent()
+decorators Parses message text; maps to intent enum
+ConversationSessionService Redis-backed session manager Tracks multi-step conversation state per
+phone number
+TemplateService @Injectable() Sends pre-approved Meta template
+messages for outbound notifications
+BotHandlers/
+Folder of handler classes
+(PaymentHandler,
+ComplaintHandler, etc.)
+Handles specific bot intents; calls domain
+services
+6.3 Supported Bot Flows
+6.3.1 Payment Flow
+Step Trigger Bot Message User Action
+1 User texts 'Pay' /
+'Payment' / 'Bill'
+Bot: Your pending bill for
+[Month]: ₹[Amount]. Reply
+PAY to get payment link.
+User replies PAY
+2 User replies PAY
+Bot: Generating secure
+payment link... [Razorpay link
+sent as button message]
+User taps link; completes payment in
+browser/app
+
+-- 26 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 27 of 49
+Step Trigger Bot Message User Action
+3 Razorpay webhook
+fires
+Bot: Payment of ₹[Amount]
+received! Receipt #[No]
+attached. [PDF link]
+User downloads receipt
+4 User has multiple
+pending bills
+Bot shows interactive list
+message with each bill; user
+selects
+User taps bill to pay
+6.3.2 Complaint Flow
+Step Trigger Bot Message User Action
+1 User texts 'Complaint' /
+'Problem' / 'Issue'
+Bot: What type of issue? [List:
+Plumbing, Electrical, Lift,
+Cleanliness, Noise, Parking,
+Other]
+User selects category
+2 Category selected Bot: Please describe your
+complaint in a message. User types description
+3 Description received
+Bot: Got it. Should this be
+anonymous? Reply YES or
+NO.
+User replies
+4 Confirmation
+Bot: Complaint #CMP-2026-
+[No] raised. We'll keep you
+updated here.
+Session ends
+5 Status update (from
+admin)
+Bot: Update on CMP-[No]:
+Status changed to [In
+Progress]. [Admin note]
+User reads update
+6.3.3 Visitor Approval Flow
+Step Trigger Bot Message User Action
+1 Guard logs visitor
+Bot: Visitor [Name] is at Main
+Gate requesting entry to your
+flat. [Photo if available]. Reply
+YES to approve or NO to deny.
+User replies YES or NO
+2 User replies YES
+Bot: Entry approved. Guard
+has been notified. [Visitor
+name] may enter.
+Entry logged in system
+3 User replies NO
+Bot: Entry denied. Guard has
+been informed. Visitor [Name]
+turned away.
+Guard sees rejection on device
+4 No response in 3 min
+Bot: Reminder: Visitor [Name]
+still waiting at gate. Reply
+YES/NO.
+Auto-cancel after 10 min
+6.3.4 Balance & Statement Flow
+• User texts 'Balance' or 'Statement' → Bot replies with current dues, last payment date, next bill date
+• User texts 'Receipt' → Bot sends last 3 receipts as PDF links
+
+-- 27 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 28 of 49
+• User texts 'Clearance' → Bot checks dues; if clear, creates document request; Secretary approves;
+PDF sent to bot
+6.3.5 Pre-Approval Flow
+• User texts 'Pre-approve' → Bot: 'Reply with visitor name and type (Maid/Cook/Driver/Guest)'
+• User provides details → Bot creates pre-approval; sends confirmation with duration
+• User texts 'Cancel approval [name]' → Bot removes pre-approval; confirms deletion
+6.3.6 Emergency SOS Flow
+• User texts 'SOS' or 'Emergency' or 'Help' → immediate SOS alert fired to all committee members
+• Bot confirms: 'SOS alert sent to all committee members. Help is on the way.'
+• This flow bypasses all conversation state — SOS is always processed immediately
+6.3.7 Help / Menu Flow
+• User texts 'Hi', 'Hello', or 'Menu' → Bot shows main menu with numbered options
+• Menu options: 1-Pay Bill, 2-Raise Complaint, 3-Check Balance, 4-Visitor Approval, 5-Pre-Approvals, 6-
+Notices, 7-Emergency SOS, 8-Help
+6.4 Outbound Notification Templates
+All outbound messages use Meta-approved templates. Template approval must be obtained before
+launch (48-hour approval time). New templates require resubmission.
+Template Name Category Trigger Event Variables
+bill_generated UTILITY New bill generated society_name, month, amount,
+due_date, payment_link
+payment_received UTILITY Payment confirmed resident_name, amount, month,
+receipt_number, receipt_link
+complaint_update UTILITY Complaint status changed ticket_number, old_status,
+new_status, update_note
+visitor_approval_request UTILITY Visitor at gate visitor_name, flat_number, gate,
+photo_url, action_instructions
+visitor_entry_confirmed UTILITY Resident approved visitor visitor_name, entry_time
+payment_reminder MARKETING Bill due date reminders resident_name, amount, due_date,
+days_overdue, payment_link
+meeting_notice UTILITY Meeting scheduled meeting_type, date_time, venue,
+agenda_preview, rsvp_instructions
+sos_alert UTILITY SOS pressed sender_name, flat_number,
+society_name, timestamp
+amc_expiry UTILITY AMC expiring soon service_name, vendor_name,
+expiry_date, days_remaining
+document_ready UTILITY Document approved and
+generated
+document_type, download_link,
+valid_until
+
+-- 28 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 29 of 49
+Template Name Category Trigger Event Variables
+welcome_kit UTILITY New resident onboarded
+resident_name, society_name,
+secretary_contact,
+app_download_link
+6.5 Conversation Session Management
+• Each active conversation tracked in Redis with key: bot:session:{phone_number}
+• Session stores: currentFlow, currentStep, collectedData (JSON), lastActivityAt
+• Session expires after 10 minutes of inactivity (Redis TTL = 600s)
+• On session expiry mid-flow: bot sends 'Your session timed out. Type Menu to start again.'
+• Concurrent sessions from same number: last message always wins (new session resets old)
+• Language support: English (v1), Hindi (v2) — detected by user's first message language
+6.6 Bot Opt-In & Opt-Out Management
+• Residents opt in automatically on onboarding (welcome message triggers subscription)
+• Resident can text 'STOP' → all WhatsApp notifications paused; data retained; compliance with Meta
+policy
+• Resident texts 'START' to re-enable
+• Opt-out status stored in bot_opt_ins table; respected by all notification dispatchers
+• Mandatory transactional messages (payment confirmation) exempt from opt-out per Meta policy
+
+-- 29 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 30 of 49
+7. Platform Admin Panel (SocietyPilot Super Admin)
+7.1 Overview
+The Platform Admin Panel is the internal operations dashboard for the SocietyPilot team (SUPER_ADMIN
+role). It is a separate React web application (Ant Design Pro) accessible only to SocietyPilot employees. It
+provides complete visibility across ALL societies on the platform, subscription management, billing,
+support tools, feature flag control, and platform health monitoring.
+ℹ The Platform Admin Panel is NEVER accessible to society committee members or residents. It is
+authenticated via a separate login endpoint (/platform-admin/auth) with stricter security: email + password +
+TOTP (Google Authenticator) 2FA required.
+7.2 Authentication (Platform Admin)
+• Login: email + password (bcrypt, rounds=12) + 6-digit TOTP from Google Authenticator
+• Sessions: 8-hour JWT; no refresh token; re-login required after expiry
+• IP allowlist: only SocietyPilot office IPs + VPN can access /platform-admin/* endpoints
+• All actions audit-logged with SUPER_ADMIN user ID, IP, action, timestamp, changed data
+7.3 Dashboard (Platform Overview)
+Widget Metric Refresh
+Total Societies Count of active societies by plan Real-time
+MRR (Monthly Recurring
+Revenue) ₹ sum of all active subscription payments Daily
+Active Users (30d) Unique users with login in last 30 days Daily
+New Societies This Month Count + growth % vs last month Daily
+Trial Societies Societies on Starter plan (conversion
+opportunity) Real-time
+WhatsApp Messages Sent
+(MTD)
+Total Meta Cloud API messages this
+month Daily
+Payment Success Rate Razorpay transactions success % across
+all societies Daily
+Platform Error Rate Sentry error count last 24h Hourly
+Infrastructure Costs Railway + R2 + SendGrid costs (manual
+entry or API) Monthly
+Revenue vs Cost Chart 12-month MRR vs infrastructure cost Monthly
+7.4 Society Management
+7.4.1 Society List
+
+-- 30 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 31 of 49
+• Paginated, searchable list of all societies: name, city, plan, flat count, onboarding status, MRR
+contribution
+• Filters: plan tier, city, onboarding status, trial expiry, last activity
+• Quick actions per row: View Details, Impersonate (see society as CHAIRMAN), Suspend, Cancel
+7.4.2 Create New Society
+• SUPER_ADMIN creates society: name, address, city, state, flat count (estimate), plan tier
+• System generates society subdomain: [society-name].societypilot.in
+• System creates CHAIRMAN user account with temporary password; sends onboarding email
+• Onboarding checklist auto-created: society profile, flat structure, resident import, first bill
+7.4.3 Society Detail View
+• Overview: address, plan, billing status, creation date, onboarding completion %
+• Users tab: all users in society with role, last login, status
+• Billing tab: subscription history, invoices, next renewal, payment method
+• Usage tab: API calls/month, storage used, WhatsApp messages/month
+• Audit log: recent admin actions taken within the society
+• Support notes: internal notes visible only to SUPER_ADMIN
+7.4.4 Impersonation Mode
+• SUPER_ADMIN can impersonate any society's CHAIRMAN for support and debugging
+• Impersonation issues a time-limited (30-min) JWT with impersonation flag
+• All actions taken during impersonation are logged with both SUPER_ADMIN ID and impersonated user
+ID
+• Impersonation banner always visible in Society Admin Panel during impersonation session
+7.5 Subscription & Billing Management
+Section Features
+Plan Management View/change society plan; apply discounts; set custom pricing for enterprise
+Invoice Management View all generated invoices; resend invoice email; mark as paid (for bank transfer)
+Payment History Full payment history per society; download GST invoice; refund processing
+Trial Management Extend trial period; convert trial to paid; set trial expiry alerts
+Dunning Management Auto-suspend after 15 days unpaid; grace period config; auto-reinstate on payment
+Revenue Analytics MRR by plan, MRR growth, churn rate, LTV per society, CAC estimates
+7.6 Platform Configuration
+7.6.1 Feature Flags
+• Toggle any feature on/off globally or per-society without deployment
+
+-- 31 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 32 of 49
+• Example flags: whatsapp_bot_enabled, razorpay_autopay_enabled, react_native_app_enabled,
+ai_triage_enabled
+• Gradual rollout: enable for X% of societies; roll out to 10% → 50% → 100%
+7.6.2 WhatsApp Template Management
+• View all registered Meta templates with approval status
+• Submit new templates for Meta approval from admin panel
+• Track template approval status; receive notification when approved
+• View template usage statistics (sent, delivered, read, failed)
+7.6.3 Global Announcements
+• Send platform-wide announcement to all CHAIRMAN users (new features, maintenance windows)
+• Announcement appears as banner in Society Admin Panel and as push notification
+7.7 Support Tools
+Tool Description
+User Lookup Search any user by phone/email across all societies; view profile, society, role, last
+login
+Payment Lookup Search any payment by Razorpay order ID; view full payment lifecycle; trigger
+manual webhook replay
+WhatsApp Log View all WhatsApp messages sent to a phone number; check delivery status
+Job Queue Monitor BullMQ dashboard: see active/waiting/failed jobs; retry failed jobs; clear queues
+Database Query Tool Safe read-only SQL query interface for debugging (only SELECT; parameterised)
+Audit Log Search Search audit logs across all societies by user, action, table, date range
+Error Log Sentry integration: view recent errors, affected societies, error frequency
+7.8 Platform Admin API Endpoints
+Method Endpoint Description
+POST /platform-admin/auth/login Email + password + TOTP login for SUPER_ADMIN
+GET /platform-admin/dashboard Platform KPI metrics
+GET /platform-admin/societies List all societies with filters
+POST /platform-admin/societies Create new society
+GET /platform-admin/societies/:id Society detail
+PATCH /platform-admin/societies/:id/plan Change society plan
+POST /platform-admin/societies/:id/impersonate Issue impersonation token
+GET /platform-admin/societies/:id/users All users in a society
+GET /platform-admin/billing/invoices All platform invoices
+
+-- 32 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 33 of 49
+Method Endpoint Description
+GET /platform-admin/billing/revenue MRR and revenue analytics
+GET /platform-admin/feature-flags List all feature flags
+PATCH /platform-admin/feature-flags/:flag Toggle feature flag
+GET /platform-admin/support/user-lookup Search user across all societies
+GET /platform-admin/support/payment/:orderId Payment lifecycle lookup
+GET /platform-admin/jobs BullMQ queue status
+POST /platform-admin/jobs/:jobId/retry Retry failed job
+GET /platform-admin/audit-logs Cross-society audit log search
+POST /platform-admin/announcements Send platform announcement
+
+-- 33 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 34 of 49
+8. Society Admin Panel (Per-Society Committee
+Dashboard)
+8.1 Overview
+The Society Admin Panel is a dedicated React web application for society committee members
+(CHAIRMAN, SECRETARY, TREASURER, JOINT_SECRETARY, COMMITTEE_MEMBER,
+TOWER_CAPTAIN, ACCOUNTANT, FACILITY_MANAGER, SECURITY_SUPERVISOR). It provides a
+desktop-optimised experience for the complex management operations that are better suited to a full-
+screen web interface than the mobile app.
+ℹ Each society gets its own branded sub-domain: [society-slug].societypilot.in. The panel is white-labelled with
+the society's name and logo in the header. Committee members use the same OTP-based login as the mobile
+app.
+8.2 Navigation Structure
+Section Sub-sections Access Roles
+Dashboard Society overview, pending actions, alerts All committee
+Residents List, add, edit, move-in/out, flat directory Chairman, Secretary
+Finance Bills, payments, expenses, funds,
+defaulters, reports Chairman, Secretary, Treasurer, Accountant
+Complaints All tickets, assignment, escalation, analytics Chairman, Secretary, Committee Member,
+Tower Captain
+Vendors Directory, ratings, AMC contracts Chairman, Secretary, Facility Manager
+Staff Guard roster, attendance, salary Chairman, Secretary, Security Supervisor
+Meetings Schedule, RSVP tracking, minutes, voting Chairman, Secretary
+Notices Create, target, schedule, read receipt
+tracking Chairman, Secretary
+Amenities Configuration, bookings calendar, approval Chairman, Secretary, Facility Manager
+Parking Slot allocation map, violations, visitor
+parking Chairman, Secretary
+Documents Request management, templates, society
+repository Chairman, Secretary
+Security Visitor log, pre-approvals, blacklist, SOS
+history
+Chairman, Secretary, Security Supervisor,
+Guard
+Analytics Charts, trends, exports Chairman, Secretary, Treasurer
+Settings Society profile, modules, notifications,
+RBAC Chairman only
+8.3 Dashboard (Society Admin)
+
+-- 34 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 35 of 49
+8.3.1 Chairman Dashboard Widgets
+Widget Data Shown Action Available
+Society Health Score
+Composite score (0-100):
+collection rate + complaint SLA +
+staff attendance + fund balance
+Drill down to weak areas
+Maintenance Collection This month: ₹X collected / ₹Y
+billed (Z%) View defaulters list
+Open Complaints Count by age: 0-7d / 7-30d / 30d+ Bulk assign to staff
+Pending Approvals Expense approvals + document
+requests + move-in approvals One-click approve queue
+Fund Balances Operating / Sinking / Reserve /
+Corpus — balance + trend arrow View full ledger
+AMC Expiry Alert Next 3 AMCs expiring — contract
+name, days left View AMC dashboard
+Defaulter Summary Count of defaulters + total
+outstanding ₹ View full defaulter list
+Upcoming Meetings Next meeting title, date, RSVP
+count vs quorum View or manage meeting
+Recent Activity Feed
+Last 10 significant events
+(payment, complaint, move-in,
+etc.)
+Navigate to each item
+8.3.2 Role-Specific Dashboards
+• Treasurer Dashboard: P&L trend chart (12 months), fund balances, expense breakdown pie chart,
+defaulter aging
+• Secretary Dashboard: Today's visitors, pending approvals, open complaint count, meeting RSVP
+status
+• Tower Captain Dashboard: Tower-specific complaint count, resident list for tower, tower notice board
+• Security Supervisor Dashboard: Guard attendance today, visitor count last 24h, SOS history, pre-
+approval expirations
+8.4 Finance Module (Admin Panel)
+8.4.1 Bill Management
+• Generate Bills: select billing period; system shows preview of amounts per flat type; confirm to
+generate (BullMQ job)
+• Bill generation status: progress bar showing X/1500 bills generated with real-time SSE updates
+• Individual bill override: Secretary can adjust amount for a specific flat with mandatory reason
+• Bill list: filter by period, flat, status (paid/pending/overdue), tower
+• Bulk actions: send WhatsApp reminder to all overdue; export overdue list as Excel
+8.4.2 Defaulter Management
+• Defaulter table: flat, resident name, total due, months pending, last payment date, contact
+• Sort by: total due (highest first), months pending (oldest first), tower
+
+-- 35 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 36 of 49
+• Bulk reminder: select multiple → send WhatsApp + SMS reminder in single action
+• Dispute flag: mark flat as 'Disputed' with note — removes from automated reminder cycle
+• Legal notice generation: select flat → generate PDF legal notice letter on society letterhead
+• Print defaulter list for committee meetings
+8.4.3 Expense Management
+• Add Expense: vendor, category, amount, invoice number, invoice PDF, description, date
+• Approval queue: expenses awaiting approval listed with one-click approve/reject
+• Expense categorisation: Maintenance, Utilities, Staff Salary, AMC, Capital Expenditure, Events, Other
+• Fund allocation: when adding expense, select fund it draws from (Operating/Sinking/Reserve)
+• Expense analytics: monthly expense by category (bar chart), top vendors by spend
+8.4.4 Financial Reports
+Report Format Description
+Monthly P&L Statement PDF + Excel Income (maintenance + other) vs Expenses by category
+Annual Balance Sheet PDF + Excel Assets, liabilities, fund balances — audit-ready
+Maintenance Collection Report PDF + Excel Bill-wise collection status; defaulter list with aging
+Defaulter Notice Letters PDF Individual letters for legal action against defaulters
+Fund Balance Report PDF All four funds: opening, additions, withdrawals, closing
+balance
+Expense Ledger PDF + Excel All expenses with approval trail; vendor-wise total
+Resident Payment History PDF Per-flat payment history for bank loans / court cases
+GST Report Excel For GST-registered societies: input/output tax summary
+8.5 Complaint Management (Admin Panel)
+• Kanban board view: columns for Open / Assigned / In Progress / Pending Parts / Resolved
+• Table view: full list with filters (category, status, tower, date range, assignee, age)
+• Bulk assign: select multiple open complaints → assign all to same staff/vendor
+• SLA heatmap: colour-coded grid showing complaint density by tower and floor
+• Recurring issue detection: system flags if same flat/location raises >3 complaints of same type in 30
+days
+• Monthly report: auto-generated PDF of complaint statistics for committee meeting
+8.6 Meeting Management (Admin Panel)
+• Meeting creation: title, type, date/time, physical venue, video link option, agenda items (drag-sort),
+attachments
+• RSVP tracking: real-time count with progress bar toward quorum threshold
+• Attendance recording: secretary marks actual attendance during/after meeting
+• Minutes editor: rich text editor for capturing minutes; tag agenda item as discussed/pending/resolved
+• Resolution recording: each resolution with vote counts (yes/no/abstain); system calculates pass/fail
+
+-- 36 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 37 of 49
+• Auto-distribution: minutes sent to all attendees via WhatsApp + email within 24h of finalisation
+• Action item tracker: extracted action items with assignee and due date; tracked till closed
+8.7 Society Settings (Admin Panel)
+8.7.1 Society Profile
+• Society name, address, registration number, GSTIN (optional), contact email, website
+• Society logo upload (used in receipts, NOCs, email headers)
+• WhatsApp number registration, secretary's digital signature for documents
+8.7.2 Flat & Tower Structure
+• Configurable: add/edit towers, phases; bulk import flat structure via Excel template
+• Flat type rates: set maintenance rate per flat type (1BHK/2BHK/3BHK/Penthouse)
+• Parking zone configuration: add zones, slots per zone, types
+8.7.3 Module Configuration
+• Enable/disable modules per society: Amenities, Visitor Management, Document Self-Service, etc.
+• Complaint SLA configuration: set escalation time thresholds (default 24h/48h)
+• Meeting quorum configuration: percentage required for valid meeting (default 60%)
+• Expense approval thresholds: configurable amount limits for approval tiers
+8.7.4 User & Role Management
+• Invite committee member: enter phone → select role → send OTP invitation
+• Role change: select user → change role → takes effect on next login
+• Deactivate user: immediately revokes access (JWT blacklisted in Redis)
+• Audit log view: full action history per user
+8.7.5 Notification Preferences
+• Configure which events trigger WhatsApp vs SMS vs Email vs Push
+• Set reminder schedule for payment defaults (configurable days: D-7, D-3, D+7, D+15, D+30)
+• Emergency broadcast opt-in: committee members choose to receive SOS on WhatsApp + SMS
+simultaneously
+
+-- 37 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 38 of 49
+9. Functional Requirements — Core Modules
+ℹ All 10 modules are specified below. Each module is accessible via: (a) React Native mobile app, (b) Society
+Admin Panel, and (c) WhatsApp Bot where applicable. The NestJS service layer is shared across all three
+access channels.
+9.1 Module 1 — Resident & Flat Management
+Society Structure
+• The system shall support a configurable hierarchy: Society → Phase → Tower/Wing → Floor → Flat
+• Flat types configurable: 1BHK, 2BHK, 3BHK, Penthouse, Commercial Shop with individual rates
+• Move-in process: OTP invitation → digital tenant approval from owner → Welcome Kit via WhatsApp
+→ system access granted
+• Move-out: dues check → no-dues certificate → auto-revoke pre-approvals, parking, bookings
+9.2 Module 2 — Finance & Maintenance
+Key Requirements
+• Auto bill generation: monthly/quarterly/annually; per flat type; bulk via BullMQ
+• Payment channels: UPI, UPI AutoPay (recurring mandate), card, netbanking via Razorpay
+• WhatsApp payment links: auto-sent on bill generation and reminder dates
+• PDF receipt: auto-generated within 60 seconds of Razorpay webhook; delivered via WhatsApp + email
+• Expense approval workflow: <₹5K (Secretary), ₹5K-₹50K (Chairman), >₹50K (Committee vote)
+• Fund tracking: Operating, Sinking, Reserve, Corpus — separate balances with transaction history
+• Defaulter management: real-time list; automated multi-stage WhatsApp reminders; legal notice PDF
+• Annual balance sheet: audit-ready export in Excel and PDF
+9.3 Module 3 — Complaint & Issue Management
+Key Requirements
+• Complaint raised via: mobile app, WhatsApp Bot, Society Admin Panel
+• Ticket lifecycle: Open → Assigned → In Progress → Pending Parts → Resolved → Closed
+• Auto-escalation: 24h unassigned → Secretary alert; 48h no update → Chairman alert
+• Anonymous complaints: identity hidden from Tower Captain and below; visible to
+Chairman/Secretary/Super Admin only
+• 7-day reopen window: resident can reopen within 7 days; new complaint after that
+9.4 Module 4 — Vendor & Staff Management
+Key Requirements
+• Vendor directory: persistent, society-owned database; survives committee changes
+• AMC tracking: 90/30/7-day expiry alerts via WhatsApp + Push to Chairman and Secretary
+• Staff management: guard roster, daily attendance, monthly salary with receipt
+• Vendor ratings: committee members rate after each job; full job history per vendor
+
+-- 38 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 39 of 49
+9.5 Module 5 — Meeting & Communication
+Key Requirements
+• Meeting types: AGM, SGM, Committee Meeting, Tower Meeting
+• Quorum tracking: real-time RSVP progress toward configured threshold
+• Online resolution voting: Yes/No/Abstain; result auto-calculated; result archived
+• Targeted notices: society-wide, tower, floor, role-specific (car owners, tenants only)
+• Urgent broadcast: water cut, power cut, gas leak — instant WhatsApp + SMS to all
+• Read receipts: X of Y members read each notice
+9.6 Module 6 — Amenity Booking
+Key Requirements
+• Real-time availability calendar; conflict prevention at database level (row lock)
+• Booking blocked if flat has >2 months outstanding dues
+• Online deposit collection; deposit refund auto-triggered on 'No Damage' mark
+• Full refund if cancelled 24h+ before slot; no refund within 24h
+• QR code gate pass sent via WhatsApp on booking confirmation
+9.7 Module 7 — Parking Management
+Key Requirements
+• Visual parking map: all zones with slot-level allocation status
+• Permanent slot assignment linked to flat + vehicle registration
+• Visitor parking booking by residents; guard sees booking on their device
+• Violation reporting with photo evidence; auto-notified to Security Supervisor
+• Waiting list for additional slot requests
+9.8 Module 8 — Document Management
+Key Requirements
+• Self-service document requests: NOC for bank loan, NOC for renovation, residence proof, parking
+allotment letter, member certificate
+• Secretary/Chairman one-click approval; PDF auto-generated with society letterhead
+• Document delivered to WhatsApp + email within 5 minutes of approval
+• Society document repository with version control and tiered access (public/committee/chairman)
+9.9 Module 9 — Security & Visitor Management
+Key Requirements
+• Visitor entry: guard logs → WhatsApp approval request to resident → entry on YES
+• Pre-approvals for regular visitors (maid, cook, driver): direct entry without call
+
+-- 39 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 40 of 49
+• Delivery management: resident notified; can instruct gate without being present
+• Blacklist: auto-alert to Chairman + Security Supervisor if blacklisted visitor attempts entry
+• SOS: instant alert to all committee via WhatsApp + Push; cannot be suppressed
+9.10 Module 10 — Dashboards & Analytics
+Key Requirements
+• Role-specific dashboards: Chairman, Treasurer, Secretary, Security Supervisor, Resident
+• Maintenance collection rate: real-time % with trend vs last month
+• Complaint analytics: resolution time trend, recurring issue detection, tower heatmap
+• Financial trend: 12-month income vs expense bar chart; fund balance trajectory
+• All reports exportable in PDF + Excel format
+
+-- 40 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 41 of 49
+10. Non-Functional Requirements
+10.1 Performance
+Metric Target Notes
+API Response Time (p95) < 300ms All standard read operations
+API Response Time (p99) < 800ms Under normal load
+Mobile App Launch (cold start) < 3 seconds React Native + Expo optimised bundle
+Mobile Screen Navigation < 300ms React Navigation native stack transitions
+Page Load Time — Web Admin < 2.5s React + Vite code-splitting applied
+Bulk Bill Generation (1500 flats) < 60 seconds BullMQ async queue processing
+Bulk WhatsApp Dispatch (1500) < 5 minutes Rate-limited to Meta API limits
+WhatsApp Bot Response Time < 3 seconds From user message receipt to bot reply
+PDF Receipt Generation < 10 seconds Per individual receipt
+Payment Webhook Processing < 5 seconds Razorpay → DB → receipt trigger
+Push Notification Delivery < 10 seconds Firebase FCM batch dispatch
+Concurrent Active Sessions > 5,000 Per deployment instance
+10.2 Security
+• All API endpoints protected by JwtAuthGuard + RolesGuard except @Public() decorated routes
+• JWT Access Token: 15-minute expiry. Refresh Token: 7-day expiry, stored in Redis, rotated on every
+use
+• OTP: 6-digit numeric, 5-min TTL in Redis, max 3 attempts before 15-min lockout
+• Platform Admin: email + password + TOTP 2FA; IP allowlist enforced at reverse proxy level
+• NestJS ThrottlerGuard: 100 req/min per IP on public; 1000 req/min on authenticated endpoints
+• SQL injection prevention: all queries via Prisma ORM parameterised — no raw SQL with user input
+• HMAC signature verification on all webhooks (Razorpay + Meta) before processing
+• File uploads: MIME type + file extension validation; 10MB per file limit via NestJS FileInterceptor
+• All data in transit: TLS 1.3 (Cloudflare enforced)
+• All data at rest: PostgreSQL disk encryption on Railway; R2 server-side encryption
+• Mobile app: certificate pinning for API calls; jailbreak/root detection warning
+• Audit log: every write operation logged with user, role, action, table, record_id, IP, timestamp
+10.3 Scalability
+• Stateless NestJS backend scales horizontally — sessions in Redis, not local memory
+• Database: PostgreSQL read replicas addable for dashboard analytics without code changes
+• BullMQ workers deployable as separate Railway services — scale independently of API
+• React Native OTA updates via Expo EAS — push JS updates without app store review
+• Multi-society isolation ensures one society's spike doesn't affect others
+
+-- 41 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 42 of 49
+10.4 Availability
+• Target uptime: 99.5% monthly (< 3.6 hours downtime/month)
+• Railway.app: automatic restart on crash; zero-downtime deployments via GitHub Actions CI/CD
+• Redis: AOF persistence — survives restarts without OTP or session loss
+• Database backups: automated daily PostgreSQL backups retained 30 days (Railway managed)
+• Razorpay webhooks: idempotent handlers; Razorpay retries 3x on failure
+10.5 Compliance
+• DPDP Act 2023: personal data processed with consent; users can export and delete their data
+• No Aadhaar numbers stored. Phone number is primary identifier (masked in logs: 98XXXXX901)
+• Razorpay PCI-DSS: SocietyPilot never handles raw card data
+• GST: societies can configure GSTIN; tax invoices generated for amenity bookings and hall rentals
+• Data residency: all data on Indian servers (Railway Mumbai + Cloudflare R2 India edge)
+• Meta WhatsApp Cloud API: all templates pre-approved; opt-in/opt-out managed per Meta policy
+
+-- 42 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 43 of 49
+11. API Design Standards
+11.1 REST Conventions
+• Base URL: https://api.societypilot.in/v1
+• All responses: JSON. Content-Type: application/json
+• Authentication: Bearer token in Authorization header (all protected routes via JwtAuthGuard)
+• society_id injected from JWT via SocietyContextInterceptor — never accepted as query param
+• NestJS ValidationPipe enforces DTO validation on all request bodies
+11.2 Response Envelope
+Success: { "success": true, "data": { ... }, "meta": { "page": 1, "total": 142 } }
+Error: { "success": false, "error": { "code": "INSUFFICIENT_BALANCE", "message": "Outstanding dues
+must be cleared before move-out." } }
+11.3 HTTP Status Codes
+Code Status When Used
+200 OK Successful GET, PUT, PATCH
+201 Created Successful POST creating a resource
+204 No Content Successful DELETE
+400 Bad Request Validation failure via ValidationPipe
+401 Unauthorized Missing or invalid JWT — JwtAuthGuard
+403 Forbidden Valid token but insufficient role/permissions — RolesGuard
+404 Not Found Resource does not exist in this society
+409 Conflict Duplicate resource (flat number, booking slot collision)
+422 Unprocessable Entity Business rule violation (dues outstanding on move-out)
+429 Too Many Requests ThrottlerGuard rate limit exceeded
+500 Internal Server Error Unexpected error — triggers Sentry alert
+11.4 Key API Endpoints
+Method Endpoint Description Auth
+POST /auth/otp/send Send OTP to mobile number Public
+POST /auth/otp/verify Verify OTP; issue JWT tokens Public
+POST /auth/refresh Refresh access token Refresh JWT
+POST /auth/logout Invalidate refresh token JWT
+GET /residents List all residents (paginated) Secretary+
+
+-- 43 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 44 of 49
+Method Endpoint Description Auth
+POST /residents Add new resident Secretary+
+PATCH /residents/:id Update resident profile Secretary+
+POST /residents/:id/moveout Initiate move-out Secretary+
+GET /finance/bills List all bills (filterable) Secretary+
+POST /finance/bills/generate Generate bills for current period Chairman/Treasurer
+POST /finance/payments Record offline payment Secretary/Accountant
+POST /finance/payments/razorpay/webhook Razorpay payment webhook API Key
+GET /finance/defaulters Get defaulter list with aging Secretary+
+GET /finance/reports/pnl Monthly P&L report Treasurer+
+POST /complaints Raise new complaint Resident+
+GET /complaints List complaints (role-scoped) All auth
+PATCH /complaints/:id/status Update complaint status Secretary+
+POST /complaints/:id/escalate Escalate complaint Resident+
+POST /amenities/:id/book Book amenity slot Resident+
+POST /meetings Schedule new meeting Secretary+
+POST /meetings/:id/vote Vote on resolution All committee
+POST /security/visitors Log visitor entry Guard+
+POST /security/preapprovals Create pre-approval Resident+
+POST /documents/request Request document (NOC etc) Resident+
+POST /documents/request/:id/approve Approve and generate document Secretary+
+GET /dashboard/chairman Chairman dashboard KPIs Chairman
+GET /dashboard/treasurer Treasurer financial dashboard Treasurer
+GET /dashboard/resident Resident personal dashboard Resident
+POST /webhook/whatsapp Meta Cloud API webhook receiver API Key (HMAC)
+
+-- 44 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 45 of 49
+12. Integration Requirements
+Service Provider Purpose Key Details
+SMS / OTP MSG91 OTP delivery + payment
+reminders
+Template-based; ₹0.18/SMS; 99.5%
+delivery rate
+WhatsApp Meta Cloud API Bot + all notifications Free 1000 msgs/month; pre-approved
+templates required; 24-48h approval time
+Email
+SendGrid via
+@nestjs-
+modules/mailer
+Receipts, NOCs, meeting
+minutes, platform invoices
+100/day free; $19.95/month for
+100K/month
+Payments Razorpay UPI, cards, AutoPay
+mandates, refunds
+2% + GST fee; T+1 settlement; webhook
+signature verification
+File Storage Cloudflare R2 Documents, receipts,
+photos, PDFs
+Zero egress cost; 10GB free;
+$0.015/GB/month; S3-compatible SDK
+Push
+Notifications
+Firebase FCM +
+Expo Push
+Mobile push: residents and
+committee
+Free up to 1M/month; critical alert priority
+for SOS
+Maps (V2) Google Maps API Society location, visitor
+route, delivery tracking Required in V2 only
+Analytics PostHog Web + mobile product
+analytics; feature flags
+Self-hostable; EU data option; free tier
+1M events/month
+Error Tracking Sentry NestJS exception filter
+reports; React Native SDK
+Free for small teams; source maps for
+production debugging
+CI/CD GitHub Actions Automated test, build, and
+deploy pipeline Deploy to Railway on main branch push
+Mobile Builds Expo EAS Build iOS and Android
+production builds
+EAS Build hosted; connects to App Store
+/ Play Console
+
+-- 45 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 46 of 49
+13. Business Rules
+13.1 Financial Rules
+• A maintenance bill cannot be deleted once generated — only waived with mandatory reason and
+Chairman approval
+• A confirmed Razorpay payment cannot be deleted — only refunded via separate refund transaction
+• Move-out blocked if any maintenance dues are unpaid — system shows exact outstanding amount
+• Expense above ₹50,000 requires a meeting resolution vote before Chairman can approve
+• Sinking fund balance can never go below ₹0 — system blocks any expense that would result in
+negative balance
+• Pro-rata billing: if a resident moves in after the 15th, bill is 50% of monthly; before the 15th, full month
+13.2 Complaint Rules
+• A complaint closed by resident cannot be reopened after 7 days — new complaint must be raised
+• Anonymous complaints hidden from Tower Captain — visible only to Secretary, Chairman,
+SUPER_ADMIN
+• Open with no assignment after 24 hours: auto-escalation fires to Secretary
+• Assigned with no update after 48 hours: auto-escalation fires to Chairman
+• Committee member cannot close a complaint — only Resident (requestor) or Secretary/Chairman can
+close
+13.3 Amenity Booking Rules
+• Flat with >2 months outstanding dues cannot book paid amenities
+• Full refund if cancelled 24+ hours before slot; no refund if cancelled within 24 hours
+• Maximum active bookings per flat: configurable per society (default 2 simultaneous)
+• Damage deposit refunded only after Facility Manager marks 'No Damage' post-event
+• Blackout dates set by committee override all resident bookings — affected residents are notified
+13.4 Security Rules
+• A visitor on the blacklist triggers automatic WhatsApp alert to Chairman and Security Supervisor —
+guard cannot override
+• Pre-approvals for domestic workers auto-expire if the flat's resident moves out
+• SOS alert sends to all committee members simultaneously — cannot be selectively suppressed
+• Visitor approval via WhatsApp Bot: if resident does not respond within 10 minutes, visitor is denied
+entry automatically
+13.5 Platform Rules (SUPER_ADMIN)
+• A society can be suspended for non-payment after 15 days past subscription due date — data retained
+for 90 days
+• SUPER_ADMIN impersonation sessions are strictly time-limited (30 minutes) and fully audit-logged
+• Feature flags changed by SUPER_ADMIN take effect within 60 seconds via Redis pub/sub
+
+-- 46 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 47 of 49
+• Society data is never permanently deleted without explicit written request from Chairman and
+SUPER_ADMIN confirmation
+
+-- 47 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 48 of 49
+14. Build Roadmap
+Phase Timeline Components Milestone
+V1 — Core
+Backend Month 1-2
+NestJS setup + Auth + Finance Module +
+Complaints + Society Admin Panel (Finance +
+Complaints sections)
+First 10 societies
+onboarded; bills
+generated digitally
+V2 — Full
+Ops Layer Month 3-4 Residents + Vendors + Meetings + Notices +
+Parking + Documents + WhatsApp Bot (core flows)
+Full operations layer
+live; bot handles
+payments + complaints
+V3 —
+Amenities &
+Security
+Month 5-6
+Amenity Booking + Security & Visitor Management
++ Society Admin Panel (all sections) + Platform
+Admin Panel
+Complete platform —
+public launch
+announcement
+V4 — Mobile
+App Month 7-9
+React Native (Expo) full app + FCM push +
+WhatsApp Bot enhanced flows + biometrics +
+offline mode
+App Store + Play Store
+launch; scale to other
+cities
+V5 — AI
+Layer Month 10+
+AI complaint triage + predictive defaulter analysis +
+smart vendor recommendations + WhatsApp Bot
+Hindi language support
+Intelligence layer;
+vernacular support;
+Tier-2/3 city expansion
+
+-- 48 of 49 --
+
+SocietyPilot Software Requirements Specification v2.0 | CONFIDENTIAL
+Page 49 of 49
+15. Appendix
+15.1 Pricing Model
+Plan Flats Price/Month Key Features
+Starter (Free) Up to 30 ₹0 Core features; 3 months free trial
+Basic Up to 100 ₹299 All modules; 5GB storage; email support; WhatsApp Bot
+Standard Up to 300 ₹599 All modules; 20GB storage; WhatsApp support; React
+Native app
+Professional Up to 750 ₹999 All modules; 50GB storage; priority support; audit
+reports; Platform Admin visibility
+Enterprise Unlimited ₹1,999 All modules; unlimited storage; dedicated onboarding;
+SLA; custom sub-domain branding
+ℹ Pune alone has 18,000+ registered housing societies. At 5% penetration on Standard plan: 900 societies ×
+₹599 = ₹5.39 Lakh/month recurring revenue.
+15.2 Document Sign-Off
+Role Name Signature & Date
+Product Owner / Founder
+Lead Developer
+Mobile Lead (React
+Native)
+QA Lead
+— End of SRS Document —
+© 2026 SocietyPilot. All Rights Reserved.
+
+-- 49 of 49 --
+
