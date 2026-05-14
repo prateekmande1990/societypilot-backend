@@ -44,14 +44,11 @@ export class FinanceService {
     societyId: string,
     query: PaginationQueryDto,
   ) {
-    const page =
-      query.page ?? 1;
+    const page = query.page ?? 1;
 
-    const limit =
-      query.limit ?? 20;
+    const limit = query.limit ?? 20;
 
-    const skip =
-      (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
     const [items, total] =
       await Promise.all([
@@ -68,6 +65,14 @@ export class FinanceService {
                 tower: true,
               },
             },
+
+            lineItems: {
+              include: {
+                chargeHead: true,
+              },
+            },
+
+            payments: true,
           },
 
           orderBy: {
@@ -89,7 +94,7 @@ export class FinanceService {
     return {
       items,
 
-      pagination: {
+      meta: {
         page,
         limit,
         total,
@@ -101,9 +106,6 @@ export class FinanceService {
     societyId: string,
     dto: GenerateBillsDto,
   ) {
-    /*
-     * Redis optional fallback
-     */
     if (!process.env.REDIS_URL) {
       const result =
         await this.executeBillGeneration(
@@ -201,12 +203,7 @@ export class FinanceService {
       };
     }
 
-    return JSON.parse(
-      stateRaw,
-    ) as Record<
-      string,
-      unknown
-    >;
+    return JSON.parse(stateRaw);
   }
 
   async executeBillGeneration(
@@ -232,6 +229,23 @@ export class FinanceService {
         },
       });
 
+    const maintenanceChargeHead =
+      await this.prisma.chargeHead.findFirst({
+        where: {
+          societyId,
+
+          code: 'MAINTENANCE',
+
+          isActive: true,
+        },
+      });
+
+    if (!maintenanceChargeHead) {
+      throw new NotFoundException(
+        'Maintenance charge head not configured',
+      );
+    }
+
     const dueDate =
       dto.dueDate
         ? new Date(dto.dueDate)
@@ -244,23 +258,65 @@ export class FinanceService {
     let processed = 0;
 
     for (const mapping of mappings) {
-      await this.prisma.bill.create({
-        data: {
-          societyId,
+      const subtotal = Number(dto.amount);
 
-          userId:
-            mapping.userId,
+      const bill =
+        await this.prisma.bill.create({
+          data: {
+            societyId,
 
-          flatId:
-            mapping.flatId,
+            userId:
+              mapping.userId,
 
-          period: dto.period,
+            flatId:
+              mapping.flatId,
 
-          amount: dto.amount,
+            billNumber:
+              await this.generateBillNumber(
+                societyId,
+              ),
 
-          dueDate,
-        },
-      });
+            period: dto.period,
+
+            subtotal,
+
+            penaltyAmount: 0,
+
+            discountAmount: 0,
+
+            totalAmount:
+              subtotal,
+
+            paidAmount: 0,
+
+            dueAmount:
+              subtotal,
+
+            dueDate,
+
+            status: 'PENDING',
+
+            lineItems: {
+              create: [
+                {
+                  chargeHeadId:
+                    maintenanceChargeHead.id,
+
+                  quantity: 1,
+
+                  unitAmount:
+                    subtotal,
+
+                  totalAmount:
+                    subtotal,
+
+                  description:
+                    'Monthly maintenance charges',
+                },
+              ],
+            },
+          },
+        });
 
       processed += 1;
 
@@ -284,20 +340,20 @@ export class FinanceService {
     societyId: string,
     dto: RecordPaymentDto,
   ) {
-    if (dto.billId) {
-      const bill =
-        await this.prisma.bill.findUnique({
-          where: {
-            id: dto.billId,
-          },
-        });
+    const bill =
+  dto.billId
+    ? await this.prisma.bill.findUnique({
+        where: {
+          id: dto.billId,
+        },
+      })
+    : null;
 
-      if (!bill) {
-        throw new NotFoundException(
-          'Bill not found',
-        );
-      }
-    }
+if (dto.billId && !bill) {
+  throw new NotFoundException(
+    'Bill not found',
+  );
+}
 
     const payment =
       await this.prisma.payment.create({
@@ -306,6 +362,9 @@ export class FinanceService {
 
           userId: dto.userId,
 
+          flatId:
+            bill?.flatId,
+
           billId: dto.billId,
 
           amount: dto.amount,
@@ -313,17 +372,52 @@ export class FinanceService {
           method: dto.method,
 
           status: 'SUCCESS',
+
+          receiptNumber:
+            await this.generateReceiptNumber(
+              societyId,
+            ),
         },
       });
 
-    if (dto.billId) {
+    if (bill) {
+      const newPaidAmount =
+        Number(
+          bill.paidAmount,
+        ) + Number(dto.amount);
+
+      const dueAmount =
+        Number(
+          bill.totalAmount,
+        ) - newPaidAmount;
+
+      let status:
+        | 'PENDING'
+        | 'PARTIALLY_PAID'
+        | 'PAID' =
+        'PENDING';
+
+      if (dueAmount <= 0) {
+        status = 'PAID';
+      } else if (
+        newPaidAmount > 0
+      ) {
+        status =
+          'PARTIALLY_PAID';
+      }
+
       await this.prisma.bill.update({
         where: {
-          id: dto.billId,
+          id: bill.id,
         },
 
         data: {
-          status: 'PAID',
+          paidAmount:
+            newPaidAmount,
+
+          dueAmount,
+
+          status,
         },
       });
     }
@@ -339,8 +433,8 @@ export class FinanceService {
         where: {
           societyId,
 
-          status: {
-            not: 'PAID',
+          dueAmount: {
+            gt: 0,
           },
 
           dueDate: {
@@ -381,6 +475,9 @@ export class FinanceService {
         return {
           billId: bill.id,
 
+          billNumber:
+            bill.billNumber,
+
           residentName:
             bill.user.name,
 
@@ -390,8 +487,14 @@ export class FinanceService {
           tower:
             bill.flat.tower,
 
-          amountDue:
-            bill.amount,
+          totalAmount:
+            bill.totalAmount,
+
+          paidAmount:
+            bill.paidAmount,
+
+          dueAmount:
+            bill.dueAmount,
 
           period:
             bill.period,
@@ -408,6 +511,7 @@ export class FinanceService {
     const [
       incomeAgg,
       billedAgg,
+      dueAgg,
     ] = await Promise.all([
       this.prisma.payment.aggregate({
         where: {
@@ -427,31 +531,41 @@ export class FinanceService {
         },
 
         _sum: {
-          amount: true,
+          totalAmount: true,
+        },
+      }),
+
+      this.prisma.bill.aggregate({
+        where: {
+          societyId,
+        },
+
+        _sum: {
+          dueAmount: true,
         },
       }),
     ]);
 
-    const income = Number(
-      incomeAgg._sum.amount ??
-        0,
-    );
-
-    const billed = Number(
-      billedAgg._sum.amount ??
-        0,
-    );
-
     return {
       period: 'current',
 
-      totalBilled: billed,
+      totalBilled:
+        Number(
+          billedAgg._sum
+            .totalAmount ?? 0,
+        ),
 
       totalCollected:
-        income,
+        Number(
+          incomeAgg._sum
+            .amount ?? 0,
+        ),
 
       outstanding:
-        billed - income,
+        Number(
+          dueAgg._sum
+            .dueAmount ?? 0,
+        ),
     };
   }
 
@@ -512,6 +626,44 @@ export class FinanceService {
       message:
         'Webhook accepted',
     };
+  }
+
+  private async generateBillNumber(
+    societyId: string,
+  ) {
+    const count =
+      await this.prisma.bill.count({
+        where: {
+          societyId,
+        },
+      });
+
+    const now = new Date();
+
+    return `BILL-${now.getFullYear()}-${String(
+      now.getMonth() + 1,
+    ).padStart(2, '0')}-${String(
+      count + 1,
+    ).padStart(5, '0')}`;
+  }
+
+  private async generateReceiptNumber(
+    societyId: string,
+  ) {
+    const count =
+      await this.prisma.payment.count({
+        where: {
+          societyId,
+        },
+      });
+
+    const now = new Date();
+
+    return `RCPT-${now.getFullYear()}-${String(
+      now.getMonth() + 1,
+    ).padStart(2, '0')}-${String(
+      count + 1,
+    ).padStart(5, '0')}`;
   }
 
   private billGenStatusKey(

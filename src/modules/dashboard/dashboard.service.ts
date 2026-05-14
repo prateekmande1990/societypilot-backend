@@ -1,72 +1,153 @@
 import { Injectable } from '@nestjs/common';
+
 import { PrismaService } from '../../prisma/prisma.service';
-import { JwtPayload } from '../auth/types/jwt-payload.type';
+
+type DashboardUser = {
+  societyId: string;
+
+  userId?: string;
+
+  role?: string;
+};
 
 @Injectable()
 export class DashboardService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+  ) {}
 
-  async chairman(user: JwtPayload) {
-    const [residentCount, openComplaints, pendingDocuments, todayVisitors] =
-      await Promise.all([
-        this.prisma.user.count({ where: { societyId: user.societyId } }),
-        this.prisma.complaint.count({
-          where: { societyId: user.societyId, status: { in: ['OPEN', 'IN_PROGRESS'] } },
-        }),
-        this.prisma.documentRequest.count({
-          where: { societyId: user.societyId, status: 'PENDING' },
-        }),
-        this.prisma.visitor.count({
-          where: {
-            societyId: user.societyId,
-            entryAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
-          },
-        }),
-      ]);
-
-    return { residentCount, openComplaints, pendingDocuments, todayVisitors };
-  }
-
-  async treasurer(user: JwtPayload) {
-    const [billedAgg, collectedAgg, overdueCount] = await Promise.all([
-      this.prisma.bill.aggregate({
-        where: { societyId: user.societyId },
-        _sum: { amount: true },
-      }),
-      this.prisma.payment.aggregate({
-        where: { societyId: user.societyId, status: 'SUCCESS' },
-        _sum: { amount: true },
-      }),
-      this.prisma.bill.count({
+  async summary(
+    societyId: string,
+  ) {
+    const [
+      totalResidents,
+      totalFlats,
+      occupiedFlats,
+      pendingComplaints,
+      billedAgg,
+      collectedAgg,
+      dueAgg,
+    ] = await Promise.all([
+      this.prisma.user.count({
         where: {
-          societyId: user.societyId,
-          status: { not: 'PAID' },
-          dueDate: { lt: new Date() },
+          societyId,
+        },
+      }),
+
+      this.prisma.flat.count({
+        where: {
+          societyId,
+        },
+      }),
+
+      this.prisma.flat.count({
+        where: {
+          societyId,
+
+          occupancyStatus:
+            'OCCUPIED',
+        },
+      }),
+
+      this.prisma.complaint.count({
+        where: {
+          societyId,
+
+          status: {
+            not: 'RESOLVED',
+          },
+        },
+      }),
+
+      this.prisma.bill.aggregate({
+        where: {
+          societyId,
+        },
+
+        _sum: {
+          totalAmount: true,
+        },
+      }),
+
+      this.prisma.payment.aggregate({
+        where: {
+          societyId,
+
+          status: 'SUCCESS',
+        },
+
+        _sum: {
+          amount: true,
+        },
+      }),
+
+      this.prisma.bill.aggregate({
+        where: {
+          societyId,
+        },
+
+        _sum: {
+          dueAmount: true,
         },
       }),
     ]);
 
-    const totalBilled = Number(billedAgg._sum.amount ?? 0);
-    const totalCollected = Number(collectedAgg._sum.amount ?? 0);
     return {
-      totalBilled,
-      totalCollected,
-      outstanding: totalBilled - totalCollected,
-      overdueBills: overdueCount,
+      residents:
+        totalResidents,
+
+      flats: totalFlats,
+
+      occupiedFlats,
+
+      vacantFlats:
+        totalFlats -
+        occupiedFlats,
+
+      pendingComplaints,
+
+      finance: {
+        totalBilled: Number(
+          billedAgg._sum
+            ?.totalAmount ?? 0,
+        ),
+
+        totalCollected:
+          Number(
+            collectedAgg._sum
+              ?.amount ?? 0,
+          ),
+
+        outstanding:
+          Number(
+            dueAgg._sum
+              ?.dueAmount ?? 0,
+          ),
+      },
     };
   }
 
-  async resident(user: JwtPayload) {
-    const [myComplaints, myPendingDocs, myPendingBills] = await Promise.all([
-      this.prisma.complaint.count({ where: { societyId: user.societyId, userId: user.userId } }),
-      this.prisma.documentRequest.count({
-        where: { societyId: user.societyId, userId: user.userId, status: 'PENDING' },
-      }),
-      this.prisma.bill.count({
-        where: { societyId: user.societyId, userId: user.userId, status: { not: 'PAID' } },
-      }),
-    ]);
+  async chairman(
+    user: DashboardUser,
+  ) {
+    return this.summary(
+      user.societyId,
+    );
+  }
 
-    return { myComplaints, myPendingDocs, myPendingBills };
+  async treasurer(
+    user: DashboardUser,
+  ) {
+    return this.summary(
+      user.societyId,
+    );
+  }
+
+  async resident(
+    user: DashboardUser,
+  ) {
+    return this.summary(
+      user.societyId,
+    );
   }
 }
