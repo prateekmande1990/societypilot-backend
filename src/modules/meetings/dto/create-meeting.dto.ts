@@ -1,16 +1,74 @@
-import { IsDateString, IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
+
+export enum MeetingTypeDto {
+  AGM = 'AGM',
+  SGM = 'SGM',
+  COMMITTEE = 'COMMITTEE',
+  EMERGENCY = 'EMERGENCY',
+  TOWER = 'TOWER',
+  GENERAL = 'GENERAL',
+}
 
 export class CreateMeetingDto {
-  @ApiProperty({ example: 'Monthly Committee Meeting' })
   @IsString()
   title!: string;
 
-  @ApiProperty({ example: 'Discuss maintenance budget and pending complaints.' })
+  @IsOptional()
   @IsString()
-  agenda!: string;
+  description?: string;
 
-  @ApiProperty({ example: '2026-05-20T11:00:00.000Z' })
+  @IsEnum(MeetingTypeDto)
+  meetingType!: MeetingTypeDto;
+
   @IsDateString()
   scheduledAt!: string;
+
+  @IsOptional()
+  @IsString()
+  location?: string;
+
+  @IsOptional()
+  @IsString()
+  meetingLink?: string;
+
+  @IsOptional()
+  agenda?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsBoolean()
+  isVotingEnabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isAnonymousVoting?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  allowProxyVotes?: boolean;
+
+  @IsOptional()
+  @IsDateString()
+  votingStartsAt?: string;
+
+  @IsOptional()
+  @IsDateString()
+  votingEndsAt?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  quorumPercentage?: number;
+
+  @IsOptional()
+  @IsArray()
+  attachmentUrls?: string[];
 }

@@ -99,6 +99,56 @@ enum ComplaintCategory {
   OTHER
 }
 
+enum MeetingType {
+  AGM
+  SGM
+  COMMITTEE
+  EMERGENCY
+  TOWER
+  GENERAL
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum VoteOption {
+  YES
+  NO
+  ABSTAIN
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  PROXY
+}
+
+enum ResolutionType {
+  FINANCIAL
+  ELECTION
+  BYLAW
+  MAINTENANCE
+  SECURITY
+  EMERGENCY
+  OTHER
+}
+
+enum VotingMethod {
+  SIMPLE_MAJORITY
+  TWO_THIRDS
+  UNANIMOUS
+}
+
+enum ResolutionStatus {
+  PENDING
+  PASSED
+  REJECTED
+}
+
 model Society {
   id String @id @default(uuid())
 
@@ -158,7 +208,9 @@ model Society {
 
   staffAttendances StaffAttendance[]
 
-  onboarding SocietyOnboarding?
+  onboarding         SocietyOnboarding?
+  meetingAttendances MeetingAttendance[]
+  meetingResolutions MeetingResolution[]
 
   @@index([city])
   @@index([state])
@@ -280,7 +332,9 @@ model User {
 
   parkingSlots ParkingSlot[]
 
-  parkingViolations ParkingViolation[]
+  parkingViolations  ParkingViolation[]
+  createdMeetings    Meeting[]           @relation("MeetingCreatedBy")
+  meetingAttendances MeetingAttendance[]
 
   recordedAttendances StaffAttendance[] @relation("AttendanceRecordedBy")
 
@@ -331,6 +385,8 @@ model Flat {
 
   documentRequests    DocumentRequest[]
   visitorPreApprovals VisitorPreApproval[]
+  meetingVotes        MeetingVote[]
+  meetingAttendances  MeetingAttendance[]
 
   @@unique([towerId, flatNumber])
   @@index([societyId])
@@ -545,21 +601,65 @@ model Meeting {
   societyId   String
   createdById String
 
-  title  String
-  agenda String
+  title       String
+  description String?
+
+  meetingType MeetingType
+
+  status MeetingStatus @default(SCHEDULED)
+
+  agenda Json?
+
+  meetingNotes String?
+
+  minutesDocumentUrl String?
+
+  location String?
+
+  meetingLink String?
 
   scheduledAt DateTime
 
+  startedAt DateTime?
+
+  endedAt DateTime?
+
+  votingStartsAt DateTime?
+
+  votingEndsAt DateTime?
+
+  quorumPercentage Int @default(51)
+
+  totalEligibleVoters Int @default(0)
+
+  totalVotesCast Int @default(0)
+
+  isVotingEnabled Boolean @default(false)
+
+  isAnonymousVoting Boolean @default(false)
+
+  allowProxyVotes Boolean @default(false)
+
+  attachmentUrls Json?
+
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
 
-  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy User @relation("MeetingCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
 
   votes MeetingVote[]
 
+  attendances MeetingAttendance[]
+
+  resolutions MeetingResolution[]
+  user        User?               @relation(fields: [userId], references: [id])
+  userId      String?
+
   @@index([societyId, scheduledAt])
+  @@index([societyId, status])
   @@map("meetings")
 }
 
@@ -567,12 +667,28 @@ model MeetingVote {
   id String @id @default(uuid())
 
   societyId String
-  meetingId String
-  userId    String
 
-  vote String
+  meetingId String
+
+  userId String
+
+  flatId String?
+
+  resolutionId String?
+
+  vote VoteOption
+
+  votingWeight Decimal @default(1)
+
+  remarks String?
+
+  isProxyVote Boolean @default(false)
+
+  proxyHolderName String?
 
   createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
 
@@ -580,9 +696,83 @@ model MeetingVote {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  flat Flat? @relation(fields: [flatId], references: [id])
+
+  resolution MeetingResolution? @relation(fields: [resolutionId], references: [id])
+
+  @@unique([meetingId, userId, resolutionId])
+  @@index([societyId, meetingId])
+  @@index([resolutionId])
+  @@map("meeting_votes")
+}
+
+model MeetingAttendance {
+  id String @id @default(uuid())
+
+  societyId String
+
+  meetingId String
+
+  userId String
+
+  flatId String?
+
+  attendanceStatus AttendanceStatus
+
+  checkInAt DateTime?
+
+  remarks String?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  flat Flat? @relation(fields: [flatId], references: [id])
+
   @@unique([meetingId, userId])
   @@index([societyId, meetingId])
-  @@map("meeting_votes")
+  @@map("meeting_attendances")
+}
+
+model MeetingResolution {
+  id String @id @default(uuid())
+
+  societyId String
+
+  meetingId String
+
+  title String
+
+  description String?
+
+  resolutionType ResolutionType
+
+  votingMethod VotingMethod @default(SIMPLE_MAJORITY)
+
+  status ResolutionStatus @default(PENDING)
+
+  passedAt DateTime?
+
+  rejectedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  votes MeetingVote[]
+
+  @@index([societyId, meetingId])
+  @@map("meeting_resolutions")
 }
 
 model Visitor {
