@@ -67,6 +67,38 @@ enum ApprovalMode {
   MANUAL
 }
 
+enum ComplaintStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  ON_HOLD
+  RESOLVED
+  CLOSED
+  REJECTED
+  REOPENED
+}
+
+enum ComplaintPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ComplaintCategory {
+  PLUMBING
+  ELECTRICAL
+  SECURITY
+  NOISE
+  PARKING
+  HOUSEKEEPING
+  LIFT
+  WATER
+  LEAKAGE
+  STAFF
+  OTHER
+}
+
 model Society {
   id String @id @default(uuid())
 
@@ -222,6 +254,12 @@ model User {
 
   complaints Complaint[]
 
+  assignedComplaints Complaint[] @relation("ComplaintAssignedTo")
+
+  complaintComments ComplaintComment[]
+
+  complaintActivities ComplaintActivity[]
+
   meetings Meeting[]
 
   votes MeetingVote[]
@@ -231,6 +269,8 @@ model User {
   visitorEntries Visitor[] @relation("VisitorResident")
 
   approvedVisitors Visitor[] @relation("VisitorApprovedBy")
+
+  visitors Visitor[]
 
   documentRequests DocumentRequest[]
 
@@ -243,7 +283,6 @@ model User {
   parkingViolations ParkingViolation[]
 
   recordedAttendances StaffAttendance[] @relation("AttendanceRecordedBy")
-  visitors            Visitor[]
 
   @@index([societyId])
   @@index([role])
@@ -373,19 +412,60 @@ model ChargeHead {
 }
 
 model Complaint {
-  id          String    @id @default(uuid())
-  societyId   String
-  userId      String
-  flatId      String?
-  title       String
+  id String @id @default(uuid())
+
+  societyId String
+
+  userId String
+
+  flatId String?
+
+  assignedToId String?
+
+  vendorId String?
+
+  title String
+
   description String
-  category    String
-  status      String    @default("OPEN")
-  priority    String    @default("MEDIUM")
-  isAnonymous Boolean   @default(false)
+
+  category ComplaintCategory
+
+  priority ComplaintPriority @default(MEDIUM)
+
+  status ComplaintStatus @default(OPEN)
+
+  ticketNumber String @unique
+
+  isAnonymous Boolean @default(false)
+
+  attachmentUrls String[]
+
+  resolutionNotes String?
+
+  residentFeedback String?
+
+  residentRating Int?
+
+  estimatedResolutionAt DateTime?
+
+  assignedAt DateTime?
+
+  acknowledgedAt DateTime?
+
+  inProgressAt DateTime?
+
+  resolvedAt DateTime?
+
+  closedAt DateTime?
+
+  reopenedAt DateTime?
+
   escalatedAt DateTime?
 
+  lastActivityAt DateTime @default(now())
+
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
@@ -394,8 +474,69 @@ model Complaint {
 
   flat Flat? @relation(fields: [flatId], references: [id], onDelete: SetNull)
 
+  assignedTo User? @relation("ComplaintAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  vendor Vendor? @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  comments ComplaintComment[]
+
+  activities ComplaintActivity[]
+
   @@index([societyId, status])
+  @@index([societyId, priority])
+  @@index([societyId, category])
+  @@index([assignedToId])
+  @@index([vendorId])
+  @@index([ticketNumber])
   @@map("complaints")
+}
+
+model ComplaintComment {
+  id String @id @default(uuid())
+
+  complaintId String
+
+  userId String
+
+  comment String
+
+  isInternal Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  complaint Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([complaintId])
+  @@map("complaint_comments")
+}
+
+model ComplaintActivity {
+  id String @id @default(uuid())
+
+  complaintId String
+
+  userId String?
+
+  action String
+
+  oldValue String?
+
+  newValue String?
+
+  remarks String?
+
+  createdAt DateTime @default(now())
+
+  complaint Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([complaintId])
+  @@map("complaint_activities")
 }
 
 model Meeting {
@@ -720,9 +861,12 @@ model Vendor {
   isActive Boolean @default(true)
 
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  complaints Complaint[]
 
   @@index([societyId, category])
   @@map("vendors")

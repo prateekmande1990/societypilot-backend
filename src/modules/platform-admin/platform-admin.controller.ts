@@ -117,9 +117,25 @@ export class PlatformAdminController {
     );
   }
 
-  @Post('societies/:id/impersonate')
-  @Roles(Role.SUPER_ADMIN)
-  impersonate(@Param('id') id: string) {
-    return this.platformAdminService.impersonate(id);
-  }
+  // @Post('societies/:id/impersonate')
+  // @Roles(Role.SUPER_ADMIN)
+  // impersonate(@Param('id') id: string) {
+  //   return this.platformAdminService.impersonate(id);
+  // }
+
+  @Post('societies/:societyId/impersonate')
+impersonate(
+  @Param('societyId')
+  societyId: string,
+
+  @Body()
+  body: {
+    role?: Role;
+  },
+) {
+  return this.platformAdminService.impersonate(
+    societyId,
+    body.role,
+  );
+}
 }

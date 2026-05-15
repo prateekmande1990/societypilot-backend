@@ -1,18 +1,37 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
+
 import { ComplaintsService } from './complaints.service';
+
 import { Roles } from '../../common/decorators/roles.decorator';
+
 import { Role } from '../../common/enums/role.enum';
+
 import { Permissions } from '../../common/decorators/permissions.decorator';
+
 import { CreateComplaintDto } from './dto/create-complaint.dto';
+
 import { UpdateComplaintStatusDto } from './dto/update-complaint-status.dto';
+
 import { JwtPayload } from '../auth/types/jwt-payload.type';
+
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
-@Controller('complaints')
+@Controller()
 export class ComplaintsController {
-  constructor(private readonly complaintsService: ComplaintsService) {}
+  constructor(
+    private readonly complaintsService: ComplaintsService,
+  ) {}
 
-  @Post()
+  @Post('/flats/:flatId/complaints')
   @Roles(
     Role.CHAIRMAN,
     Role.SECRETARY,
@@ -26,27 +45,102 @@ export class ComplaintsController {
     Role.FAMILY_MEMBER,
   )
   @Permissions('complaints:write')
-  raise(@Req() req: { user: JwtPayload }, @Body() dto: CreateComplaintDto) {
-    return this.complaintsService.raise(req.user, dto);
+  raise(
+    @Req() req: { user: JwtPayload },
+
+    @Param('flatId') flatId: string,
+
+    @Body() dto: CreateComplaintDto,
+  ) {
+    return this.complaintsService.raise(
+      req.user,
+      flatId,
+      dto,
+    );
   }
 
-  @Get()
-  list(@Req() req: { user: JwtPayload }, @Query() query: PaginationQueryDto) {
-    return this.complaintsService.list(req.user, query);
+  @Get('/flats/:flatId/complaints')
+  list(
+    @Req() req: { user: JwtPayload },
+
+    @Param('flatId') flatId: string,
+
+    @Query() query: PaginationQueryDto,
+  ) {
+    return this.complaintsService.list(
+      req.user,
+      flatId,
+      query,
+    );
   }
 
-  @Patch(':id/status')
-  @Roles(Role.CHAIRMAN, Role.SECRETARY, Role.JOINT_SECRETARY, Role.MAINTENANCE_STAFF)
+  @Patch('/complaints/:id/status')
+  @Roles(
+    Role.CHAIRMAN,
+    Role.SECRETARY,
+    Role.JOINT_SECRETARY,
+    Role.MAINTENANCE_STAFF,
+  )
   @Permissions('complaints:update')
   updateStatus(
     @Req() req: { user: JwtPayload },
+
     @Param('id') id: string,
+
     @Body() dto: UpdateComplaintStatusDto,
   ) {
-    return this.complaintsService.updateStatus(req.user, id, dto);
+    return this.complaintsService.updateStatus(
+      req.user,
+      id,
+      dto,
+    );
   }
 
-  @Post(':id/escalate')
+  @Patch('/complaints/:id/close')
+@Roles(
+  Role.CHAIRMAN,
+  Role.SECRETARY,
+  Role.JOINT_SECRETARY,
+  Role.OWNER_RESIDENT,
+  Role.OWNER_NONRESIDENT,
+  Role.TENANT,
+  Role.FAMILY_MEMBER,
+)
+@Permissions('complaints:write')
+close(
+  @Req() req: { user: JwtPayload },
+
+  @Param('id') id: string,
+) {
+  return this.complaintsService.close(
+    req.user,
+    id,
+  );
+}
+
+@Patch('/complaints/:id/reopen')
+@Roles(
+  Role.CHAIRMAN,
+  Role.SECRETARY,
+  Role.JOINT_SECRETARY,
+  Role.OWNER_RESIDENT,
+  Role.OWNER_NONRESIDENT,
+  Role.TENANT,
+  Role.FAMILY_MEMBER,
+)
+@Permissions('complaints:write')
+reopen(
+  @Req() req: { user: JwtPayload },
+
+  @Param('id') id: string,
+) {
+  return this.complaintsService.reopen(
+    req.user,
+    id,
+  );
+}
+
+  @Post('/complaints/:id/escalate')
   @Roles(
     Role.CHAIRMAN,
     Role.SECRETARY,
@@ -58,16 +152,32 @@ export class ComplaintsController {
     Role.TENANT,
   )
   @Permissions('complaints:write')
-  escalate(@Param('id') id: string) {
-    return this.complaintsService.escalate(id);
+  escalate(
+    @Param('id') id: string,
+  ) {
+    return this.complaintsService.escalate(
+      id,
+    );
   }
 
-  @Post('escalations/run')
-  @Roles(Role.CHAIRMAN, Role.SECRETARY, Role.SUPER_ADMIN)
+  @Post('/complaints/escalations/run')
+  @Roles(
+    Role.CHAIRMAN,
+    Role.SECRETARY,
+    Role.SUPER_ADMIN,
+  )
   @Permissions('complaints:update')
-  runEscalations(@Req() req: { user: JwtPayload }) {
+  runEscalations(
+    @Req() req: { user: JwtPayload },
+  ) {
     const scope =
-      req.user.role === Role.SUPER_ADMIN ? undefined : req.user.societyId;
-    return this.complaintsService.runAutoEscalation(scope);
+      req.user.role ===
+      Role.SUPER_ADMIN
+        ? undefined
+        : req.user.societyId;
+
+    return this.complaintsService.runAutoEscalation(
+      scope,
+    );
   }
 }
