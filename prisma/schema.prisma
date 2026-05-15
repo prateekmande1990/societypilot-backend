@@ -41,6 +41,32 @@ enum ChargeHeadType {
   OTHER
 }
 
+enum VisitorType {
+  GUEST
+  DELIVERY
+  CAB
+  SERVICE
+  STAFF
+  EMERGENCY
+}
+
+enum VisitorStatus {
+  PENDING
+  APPROVED
+  DENIED
+  ENTERED
+  EXITED
+  EXPIRED
+}
+
+enum ApprovalMode {
+  PRE_APPROVED
+  CALL_APPROVED
+  OTP_APPROVED
+  QR_APPROVED
+  MANUAL
+}
+
 model Society {
   id String @id @default(uuid())
 
@@ -202,6 +228,10 @@ model User {
 
   visitorPreApprovals VisitorPreApproval[]
 
+  visitorEntries Visitor[] @relation("VisitorResident")
+
+  approvedVisitors Visitor[] @relation("VisitorApprovedBy")
+
   documentRequests DocumentRequest[]
 
   approvedDocuments DocumentRequest[] @relation("DocumentApprovedBy")
@@ -213,6 +243,7 @@ model User {
   parkingViolations ParkingViolation[]
 
   recordedAttendances StaffAttendance[] @relation("AttendanceRecordedBy")
+  visitors            Visitor[]
 
   @@index([societyId])
   @@index([role])
@@ -259,7 +290,8 @@ model Flat {
 
   parkingSlots ParkingSlot[]
 
-  documentRequests DocumentRequest[]
+  documentRequests    DocumentRequest[]
+  visitorPreApprovals VisitorPreApproval[]
 
   @@unique([towerId, flatNumber])
   @@index([societyId])
@@ -417,27 +449,66 @@ model Visitor {
 
   societyId String
 
+  flatId String?
+
+  residentId String?
+
+  approvedById String?
+
+  preApprovalId String?
+
   name String
 
   phone String?
+
+  visitorType VisitorType
 
   purpose String?
 
   vehicleNo String?
 
-  status String @default("ENTERED")
+  companyName String?
 
-  entryAt DateTime @default(now())
+  photoUrl String?
+
+  entryGate String?
+
+  exitGate String?
+
+  approvalMode ApprovalMode?
+
+  status VisitorStatus @default(PENDING)
+
+  isInside Boolean @default(false)
+
+  entryAt DateTime?
 
   exitAt DateTime?
 
+  approvedAt DateTime?
+
+  deniedAt DateTime?
+
+  remarks String?
+
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
-  flat    Flat?   @relation(fields: [flatId], references: [id])
-  flatId  String?
 
+  flat Flat? @relation(fields: [flatId], references: [id])
+
+  resident User? @relation("VisitorResident", fields: [residentId], references: [id])
+
+  approvedBy User? @relation("VisitorApprovedBy", fields: [approvedById], references: [id])
+
+  preApproval VisitorPreApproval? @relation(fields: [preApprovalId], references: [id])
+  user        User?               @relation(fields: [userId], references: [id])
+  userId      String?
+
+  @@index([societyId, status])
+  @@index([societyId, visitorType])
   @@index([societyId, entryAt])
   @@map("visitors")
 }
@@ -446,28 +517,49 @@ model VisitorPreApproval {
   id String @id @default(uuid())
 
   societyId String
-  userId    String
+
+  userId String
+
+  flatId String?
 
   visitorName String
 
   visitorPhone String?
 
+  visitorType VisitorType
+
   purpose String?
+
+  vehicleNo String?
+
+  qrCode String?
+
+  maxEntries Int @default(1)
+
+  usedEntries Int @default(0)
 
   validFrom DateTime @default(now())
 
   validUntil DateTime
 
-  status String @default("ACTIVE")
+  status VisitorStatus @default(APPROVED)
+
+  remarks String?
 
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
 
   society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  flat Flat? @relation(fields: [flatId], references: [id])
+
+  visitors Visitor[]
+
   @@index([societyId, status])
+  @@index([societyId, validUntil])
   @@map("visitor_pre_approvals")
 }
 

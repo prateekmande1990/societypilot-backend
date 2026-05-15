@@ -30,6 +30,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TowersModule } from './modules/towers/towers.module';
 import { FlatsModule } from './modules/flats/flats.module';
+import { VisitorsModule } from './modules/visitors/visitors.module';
 
 const useRedis = Boolean(process.env.REDIS_URL);
 
@@ -64,7 +65,8 @@ const useRedis = Boolean(process.env.REDIS_URL);
     AdminSettingsModule,
     PlatformAdminModule,
     TowersModule,
-    FlatsModule
+    FlatsModule,
+    VisitorsModule
   ],
   providers: [
     AppService,
