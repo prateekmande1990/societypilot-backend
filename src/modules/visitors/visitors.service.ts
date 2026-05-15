@@ -21,46 +21,109 @@ export class VisitorsService {
     flatId: string,
     dto: CreateVisitorDto,
   ) {
-    return this.prisma.visitor.create({
-      data: {
-        societyId,
+    const activePreApproval =
+      dto.phone
+        ? await this.prisma.visitorPreApproval.findFirst(
+            {
+              where: {
+                societyId,
+                flatId,
+                visitorPhone: dto.phone,
+                visitorType:
+                  dto.visitorType,
+                status: 'APPROVED',
+                validUntil: {
+                  gte: new Date(),
+                },
+              },
+              orderBy: {
+                validUntil: 'asc',
+              },
+            },
+          )
+        : null;
 
-        flatId,
+    const isAutoApproved =
+      Boolean(activePreApproval) &&
+      (activePreApproval?.usedEntries ?? 0) <
+        (activePreApproval?.maxEntries ?? 0);
 
-        name: dto.name,
+    const createdVisitor =
+      await this.prisma.visitor.create({
+        data: {
+          societyId,
 
-        phone: dto.phone,
+          flatId,
 
-        visitorType:
-          dto.visitorType,
+          name: dto.name,
 
-        purpose: dto.purpose,
+          phone: dto.phone,
 
-        vehicleNo:
-          dto.vehicleNo,
+          visitorType:
+            dto.visitorType,
 
-        companyName:
-          dto.companyName,
+          purpose: dto.purpose,
 
-        entryGate:
-          dto.entryGate,
+          vehicleNo:
+            dto.vehicleNo,
 
-        remarks:
-          dto.remarks,
+          companyName:
+            dto.companyName,
 
-        status: 'PENDING',
+          entryGate:
+            dto.entryGate,
 
-        isInside: false,
-      },
+          remarks:
+            dto.remarks,
 
-      include: {
-        flat: {
-          include: {
-            tower: true,
+          preApprovalId:
+            activePreApproval?.id,
+
+          residentId:
+            activePreApproval?.userId,
+
+          approvalMode:
+            isAutoApproved
+              ? 'PRE_APPROVED'
+              : null,
+
+          status: isAutoApproved
+            ? 'APPROVED'
+            : 'PENDING',
+
+          approvedAt:
+            isAutoApproved
+              ? new Date()
+              : null,
+
+          isInside: false,
+        },
+
+        include: {
+          flat: {
+            include: {
+              tower: true,
+            },
           },
         },
-      },
-    });
+      });
+
+    if (isAutoApproved && activePreApproval) {
+      await this.prisma.visitorPreApproval.update(
+        {
+          where: {
+            id: activePreApproval.id,
+          },
+          data: {
+            usedEntries: {
+              increment: 1,
+            },
+          },
+        },
+      );
+    }
+
+    return createdVisitor;
   }
 
   async approveVisitor(
@@ -307,5 +370,38 @@ export class VisitorsService {
         },
       },
     );
+  }
+
+  async autoDenyTimedOutVisitors(
+    societyId: string,
+  ) {
+    const thresholdDate = new Date(
+      Date.now() - 10 * 60 * 1000,
+    );
+
+    const updateResult =
+      await this.prisma.visitor.updateMany(
+        {
+          where: {
+            societyId,
+            status: 'PENDING',
+            createdAt: {
+              lte: thresholdDate,
+            },
+          },
+          data: {
+            status: 'DENIED',
+            deniedAt: new Date(),
+            remarks:
+              'Auto-denied after 10 minutes without resident response',
+          },
+        },
+      );
+
+    return {
+      deniedCount:
+        updateResult.count,
+      thresholdDate,
+    };
   }
 }

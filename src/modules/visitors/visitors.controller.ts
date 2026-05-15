@@ -129,4 +129,16 @@ export class VisitorsController {
       societyId,
     );
   }
+
+  @Post(
+    'societies/:societyId/auto-deny-timeouts',
+  )
+  autoDenyTimedOutVisitors(
+    @Param('societyId')
+    societyId: string,
+  ) {
+    return this.visitorsService.autoDenyTimedOutVisitors(
+      societyId,
+    );
+  }
 }
